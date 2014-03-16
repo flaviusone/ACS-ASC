@@ -1,0 +1,17 @@
+test_name = 4
+bonus = 0
+num_nodes = 12
+
+# datastore processing time in seconds
+min_datastore_delay = 0.005
+max_datastore_delay = 0.01
+
+# 0 - unlimited, 
+# N > 0 - each datastore can receive a maximum of rand(N) requests
+max_pending_requests = 4
+
+# max time per test iteration
+timeout = 30
+
+seed_elem = 314
+seed_datastore = 271

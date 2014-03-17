@@ -1,5 +1,5 @@
 """
-    This module provides the storage part of the cluster's nodes.    
+    This module provides the storage part of the cluster's nodes.
 
     Computer Systems Architecture Course
     Assignment 1 - Cluster Activity Simulation
@@ -145,7 +145,7 @@ class Datastore:
     def get_b(self, node):
         """
             Returns the element of b stored in this datastore. This is a
-            blocking operation. The maximum number of in-flight requests is 
+            blocking operation. The maximum number of in-flight requests is
             limited, see get_max_pending_requests().
 
             @type node: Node
@@ -162,7 +162,7 @@ class Datastore:
     def put_b(self, node, b):
         """
             Updates the element of b stored in this datastore. This is a
-            blocking operation. The maximum number of in-flight requests is 
+            blocking operation. The maximum number of in-flight requests is
             limited, see get_max_pending_requests().
 
             @type node: Node

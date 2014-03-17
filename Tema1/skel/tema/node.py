@@ -80,16 +80,14 @@ class Node:
 
 
         try:
-            thread = Master(self.node_id,self.matrix_size,self.datastore,self.nodes)
-            self.datastore.register_thread(self,thread)
-            thread.start()
-            self.thread_list.append(thread)
+            self.thread = Master(self.node_id,self.matrix_size,self.datastore,self.nodes)
+            self.datastore.register_thread(self,self.thread)
+            self.thread.start()
+            self.thread_list.append(self.thread)
         except(ValueError):
             print "Eroare la creare master thread"
 
-
-
-        return (256.272,3)
+        return (self.node_id,self.node_id)
 
         # TODO other code
 

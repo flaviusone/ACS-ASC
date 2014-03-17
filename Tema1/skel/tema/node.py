@@ -5,7 +5,7 @@
     Assignment 1 - Cluster Activity Simulation
     March 2014
 """
-
+from thread_helper import *
 
 class Node:
     """
@@ -27,6 +27,7 @@ class Node:
         self.matrix_size = matrix_size
         self.datastore = None
         self.nodes = None
+        self.thread_list = []
         # TODO other code
 
 
@@ -54,7 +55,7 @@ class Node:
 
     def set_nodes(self, nodes):
         """
-            Informs the current node of the other nodes in the cluster. 
+            Informs the current node of the other nodes in the cluster.
             Guaranteed to be called before the first call to 'get_x'.
 
             @type nodes: List of Node
@@ -74,7 +75,22 @@ class Node:
             @return: the x value and the index of this variable in the solution
                 vector
         """
-        pass
+
+        # Pornesc master thread
+
+
+        try:
+            thread = Master(self.node_id,self.matrix_size,self.datastore,self.nodes)
+            self.datastore.register_thread(self,thread)
+            thread.start()
+            self.thread_list.append(thread)
+        except(ValueError):
+            print "Eroare la creare master thread"
+
+
+
+        return (256.272,3)
+
         # TODO other code
 
 
@@ -84,5 +100,6 @@ class Node:
             is invoked by the tester. This method must block until all the
             threads started by this node terminate.
         """
-        pass
+        for i in self.thread_list:
+            i.join()
         # TODO other code

@@ -78,25 +78,24 @@ class Node:
                 vector
         """
 
-
+        # Pornesc listner thread
+        try:
+            self.listner = Listner(self.node_id,self.matrix_size,self.datastore,self.nodes,self.thread_list)
+            self.datastore.register_thread(self,self.listner)
+            self.thread_list.append(self.listner)
+        except(ValueError):
+            print "Eroare la creare master listner"
 
         # Pornesc master thread
         try:
             self.thread = Master(self.node_id,self.matrix_size,self.datastore,self.nodes,self.thread_list)
             self.datastore.register_thread(self,self.thread)
             self.thread.start()
+            self.listner.start()
             self.thread_list.append(self.thread)
         except(ValueError):
             print "Eroare la creare master thread"
 
-        # Pornesc listner thread
-        try:
-            self.listner = Listner(self.node_id,self.matrix_size,self.datastore,self.nodes,self.thread_list)
-            self.datastore.register_thread(self,self.listner)
-            self.listner.start()
-            self.thread_list.append(self.listner)
-        except(ValueError):
-            print "Eroare la creare master listner"
 
         return (self.node_id,self.node_id)
 
@@ -109,6 +108,12 @@ class Node:
             is invoked by the tester. This method must block until all the
             threads started by this node terminate.
         """
-        for i in self.thread_list:
-            i.join()
+
+        self.thread.join()
+
+        # Opresc listner
+        self.listner.exit=1
+        self.listner.event_listner.set()
+        self.listner.join()
+
         # TODO other code

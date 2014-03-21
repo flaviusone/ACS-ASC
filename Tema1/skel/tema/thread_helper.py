@@ -4,15 +4,63 @@ from threading import Event,Thread, current_thread, Lock, Semaphore, Condition
 from time import sleep
 from barrier import ReusableBarrierSem
 
-class Master(Thread):
-	def __init__(self, node_id, matrix_size, datastore, nodes):
+class Listner(Thread):
+	def __init__(self, node_id, matrix_size, datastore, nodes, thread_list):
 		Thread.__init__(self, name = str(node_id))
 		self.node_id = node_id
 		self.matrix_size = matrix_size
 		self.datastore = datastore
 		self.nodes = nodes
-		self.thread_list = []
+		self.thread_list = thread_list
 		self.self_node = self.nodes[self.node_id]
+		self.destination_node = None
+		self.element = None
+		self.event_listner = Event()
+		self.semafor = Semaphore(value = 1)
+		self.exit = 0
+
+	def run(self):
+		while(True):
+			# Astept sa primesc o cerere de la alt nod
+			print "Waiting"
+			self.event_listner.wait()
+			if self.exit==1:
+				break
+			# Scot element din datastore si il trimit
+			payload = self.datastore.get_A(self.self_node,self.element)
+			self.destination_node.thread.payload_bay = payload
+			# Notific nodul destinatie ca am trimis
+			self.destination_node.thread.event_listner.set()
+			# Clear si reiau bucla
+			self.event_listner.clear();
+			# Deblochez semafor
+			self.semafor.release()
+			print "Boom\n"
+
+
+	def set(self,destination_node,element):
+		self.semafor.acquire()
+		self.destination_node = destination_node
+		self.element = element
+		self.event_listner.set()
+		print "Sunt %s si am primit cerere pentru elementul %d de la %s\n" % (self.node_id, element,str(destination_node))
+
+
+class Master(Thread):
+	def __init__(self, node_id, matrix_size, datastore, nodes,thread_list):
+		Thread.__init__(self, name = str(node_id))
+		self.node_id = node_id
+		self.matrix_size = matrix_size
+		self.datastore = datastore
+		self.nodes = nodes
+		self.thread_list = thread_list
+		self.self_node = self.nodes[self.node_id]
+		self.listner_thread = self.thread_list[0]
+		self.event_listner = Event()
+
+		# Aici imi pun elemente de alte noduri
+		self.payload_bay = None
+
 		random.seed(0)
 
 		#########################
@@ -41,10 +89,23 @@ class Master(Thread):
 
 	def run(self):
 		# main for loop
-		# self.datastore.get_A(self.nodes[self.node_id],self.node_id)
 		for j in range(self.matrix_size):
 			rp = self.find_pivot(j)
 			self.swap_rows(rp,j)
+			if self.node_id > j:
+				# Cerun element
+				print "Inainte de set"
+				self.nodes[0].listner.set(self.self_node,0)
+
+				# Astept sa il primesc
+				self.event_listner.wait()
+				self.event_listner.clear()
+				print "Am primit de la cine am cerut\n"
+			# 	for i in range(j+1,self.matrix_size):
+			# 		element = self.datastore.get_A(self.self_node,i)
+			# 		element -= self.datastore
+			# 		self.datastore.put_A(self.self_node,i,element)
+			# 	self.datastore.put_A(self.self_node,j,0)
 
 	def swap_rows(self,rp,j):
 		"""
@@ -63,6 +124,18 @@ class Master(Thread):
 				self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
 			# Trimit
 			self.nodes[j].thread.incomming_buffer = self.outgoing_buffer
+
+		self.barrier.wait()
+
+		# Updatez linia
+		if self.node_id == j:
+			for i in range(self.matrix_size):
+				self.datastore.put_A(self.self_node,i,self.incomming_buffer[i])
+
+		if self.node_id == rp:
+			for i in range(self.matrix_size):
+				self.datastore.put_A(self.self_node,i,self.incomming_buffer[i])
+
 		self.barrier.wait()
 		return True
 
@@ -94,6 +167,8 @@ class Master(Thread):
 				if abs(self.valori_pivot[k]) > maxim:
 					maxim = self.valori_pivot[k]
 					index = k
+			if maxim == 0:
+				print "Maxim 0 matrice nesingulara"
 			print "Am calculat maxim %d pe row %d" % (maxim,index)
 			# print maxim
 

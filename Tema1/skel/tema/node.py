@@ -28,6 +28,8 @@ class Node:
         self.datastore = None
         self.nodes = None
         self.thread_list = []
+
+
         # TODO other code
 
 
@@ -76,16 +78,25 @@ class Node:
                 vector
         """
 
+
+
         # Pornesc master thread
-
-
         try:
-            self.thread = Master(self.node_id,self.matrix_size,self.datastore,self.nodes)
+            self.thread = Master(self.node_id,self.matrix_size,self.datastore,self.nodes,self.thread_list)
             self.datastore.register_thread(self,self.thread)
             self.thread.start()
             self.thread_list.append(self.thread)
         except(ValueError):
             print "Eroare la creare master thread"
+
+        # Pornesc listner thread
+        try:
+            self.listner = Listner(self.node_id,self.matrix_size,self.datastore,self.nodes,self.thread_list)
+            self.datastore.register_thread(self,self.listner)
+            self.listner.start()
+            self.thread_list.append(self.listner)
+        except(ValueError):
+            print "Eroare la creare master listner"
 
         return (self.node_id,self.node_id)
 

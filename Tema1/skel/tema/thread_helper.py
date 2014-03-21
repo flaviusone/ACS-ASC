@@ -93,19 +93,34 @@ class Master(Thread):
 			rp = self.find_pivot(j)
 			self.swap_rows(rp,j)
 			if self.node_id > j:
-				# Cerun element
-				print "Inainte de set"
-				self.nodes[0].listner.set(self.self_node,0)
+				for i in range(j+1,self.matrix_size):
+					element = self.datastore.get_A(self.self_node,i)
 
-				# Astept sa il primesc
-				self.event_listner.wait()
-				self.event_listner.clear()
-				print "Am primit de la cine am cerut\n"
-			# 	for i in range(j+1,self.matrix_size):
-			# 		element = self.datastore.get_A(self.self_node,i)
-			# 		element -= self.datastore
-			# 		self.datastore.put_A(self.self_node,i,element)
-			# 	self.datastore.put_A(self.self_node,j,0)
+					# Cer elementul i de la nodul j
+					self.nodes[j].listner.set(self.self_node,i)
+					# # Astept sa il primesc
+					self.event_listner.wait()
+					self.event_listner.clear()
+					aux1 = self.payload_bay
+
+					# Cer elementul j de la nodul curent
+					self.self_node.listner.set(self.self_node,j)
+					# # Astept sa il primesc
+					self.event_listner.wait()
+					self.event_listner.clear()
+					aux2 = self.payload_bay
+
+					# Cer elementul j de la nodul j
+					self.nodes[j].listner.set(self.self_node,j)
+					# # Astept sa il primesc
+					self.event_listner.wait()
+					self.event_listner.clear()
+					aux3 = self.payload_bay
+
+
+					element -= aux1 * (aux2 / aux3)
+					self.datastore.put_A(self.self_node,i,element)
+				self.datastore.put_A(self.self_node,j,0)
 
 	def swap_rows(self,rp,j):
 		"""

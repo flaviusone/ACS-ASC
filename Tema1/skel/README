@@ -1,0 +1,63 @@
+Nume: Tirnacop Flavius-Costin
+Grupa: 331CA
+E-maiil: flavius.tirnacop@yahoo.com
+
+Tema 1 - Simularea activitatii unui cluster
+
+Nota: Tema trece primele 8/10 teste atat local cat si pe fep.grid.pub.ro
+
+0. Versiune python 2.7.3
+
+1. Algoritm de rezolvare - am sa descriu pasii urmati in fiecare functie apelata
+pentru a explica cat mai bine algoritmul de rezolvare.
+
+	1.1. node.py - get_x() - in aceasta metoda am apelat constructorii pentru
+	thread-ul principal "Master" si pentru threadul "Listener" iar apoi le-am
+	inregistrat in datastore si le-am pornit.Tot aici se apeleaza wait pe eventul
+	job_done pentru a face functia sa se blocheze pana cand se va termina de calulat
+
+	1.2 node.py - shutdown() - in aceasta metoda se face join dupa threadul
+	master si dupa threadul listener iar apoi se semnaleaza iesirea din bucla a
+	threadului listener.
+
+	1.3 Master thread run() - in metoda run se calculeaza efectiv solutia dupa
+	urmatorul algoritm adaptat dupa pseudocodul de pe wikipedia:
+		- fiecare nod executa un for dupa matrix_size
+			- la pasul j se calculeaza maximul de pe coloana j (argmax)
+			- se face swap la randul corespunzator maximului cu randul actual
+			- daca nodul are indicele > j
+				- se calculeaza (A[i, k] / A[k, k])
+				- fiecare nod executa un for de la j+1 la matrix_size
+					- se cere si A[k, j]
+					- se updateaza elementul A[i, j]
+				- se updateaza si elementul b din matrice
+
+		- fiecare nod executa secventa de backward substitution
+		- for descrescator dupa matrix_size
+			- calculam solutia locala
+			- recalculam elementul b in functie de solutia aflata la pasul i
+
+	1.4 Master thread find_pivot(row) 	- nodul row asteapta ca toate celelalte
+	 noduri (cu indicele mai mare ca el) sa puna elementul de pe coloana row
+	 intr-un buffer local (valori_pivot) pentru ca apoi sa calculeze maximul global de pe coloana
+	 									- apoi se face broadcast la toata lumea
+	  cu noul maxim gasit
+
+	1.5 Master thread swap_rows(rp,j)	- este metoda ce se ocupa cu swap-ul a
+	doua row-uri.Intai fiecare row isi creaza un outgoing buffer prin interogari
+	repetate la fiecare apelare a metodei.Apoi se trimite acest buffer in campul
+	incomming buffer al nodului caruia se cere swap-ul.La final ambele noduri
+	isi updateaza datastore-ul cu ce au primit dupa swap.
+
+	1.6 Listener thread run()	- thread-ul de listener al fiecaruit nod nu face
+	altceva decat sa rezolve cererile de elemente individuale de la celelalte noduri
+								- astfel detine un Event() numit event_listener
+	care ramane blocat intr-o bucla while (pentru viitoare cereri) iar cand este
+	apelata metoda set a acesta se deblocheaza si se executa codul ce face interogarea
+	datastore-ului personal si trimite datale catre nodul destinatie.
+	1.6 Listener thread set() - detine un semafor pentru a permite doar o cerere
+	de element odata si nu face altceva decat sa apeleze event_listener.set()
+
+
+Sper ca este destul de in detaliu explicat.Pentru eventuale nelamuriri contact me
+@ email.Mentionez din nou ca tema imi trece 8/10 teste atat local cat si pe fep.

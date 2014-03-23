@@ -62,15 +62,18 @@ class Master(Thread):
 		self.thread_list = thread_list
 		self.self_node = self.nodes[self.node_id]
 		self.listner_thread = self.thread_list[0]
+
+		# Folosit la obtinut elemente de la alte noduri prin thread listener
 		self.event_listner = Event()
+
+		# Folosit pentru a bloca functia get_X
 		self.job_done = Event()
 
-		# Aici imi pun elemente de alte noduri
+		# Aici livreaza elemente de alte noduri
 		self.payload_bay = None
 
+		# Soluti finala
 		self.solution = None
-
-		random.seed(0)
 
 		#########################
 		# Creez o bariera locala
@@ -83,17 +86,14 @@ class Master(Thread):
 		#########################
 
 		#########################
-		# in valor_pivot primesc date de la celalalte noduri
+		# in valor_pivot primesc date de la celalalte noduri despre pivot
 		# in incomming_buffer primesc de la alt nod un rand intreg
 		# in outgoing_buffer creez pachetul pe care il trimit la alt nod
-		self.valori_pivot = []
-		self.incomming_buffer = []
-		self.outgoing_buffer = []
-		# Initializez cu 0
-		for i in range(self.matrix_size):
-			self.valori_pivot.append(0)
-			self.incomming_buffer.append(0)
-			self.outgoing_buffer.append(0)
+		# ATENTIE bufferul se creeaza DE FIECARE DATA prin INTEROGARI REPETATE
+		self.valori_pivot = [0] * self.matrix_size
+		self.incomming_buffer = [0] * self.matrix_size
+		self.outgoing_buffer = [0] * self.matrix_size
+
 		#########################
 
 	def run(self):
@@ -101,13 +101,7 @@ class Master(Thread):
 		# main for loop
 		for j in range(self.matrix_size):
 			rp = self.find_pivot(j)
-
 			self.barrier.wait()
-			# for i in range(self.matrix_size):
-			# 	if self.node_id == i:
-			# 		print "%s %s\n" % (self.datastore.A_row,self.datastore.b_elem)
-			# 	self.barrier.wait()
-
 			self.swap_rows(rp,j)
 
 			if self.node_id > j:
@@ -146,29 +140,10 @@ class Master(Thread):
 				self.event_listner.clear()
 				aux1 = self.payload_bay
 
-				# Cer elementul j de la nodul curent
-				aux2 = self.datastore.get_A(self.self_node,j)
-
-				# Cer elementul j de la nodul j
-				self.nodes[j].listner.set(self.self_node,j)
-
-				# Astept sa il primesc
-				self.event_listner.wait()
-				self.event_listner.clear()
-				aux3 = self.payload_bay
-
 				element -= aux1 * (aux2 / aux3)
 				self.datastore.put_b(self.self_node,element)
 				############COMPUTE B#############
 				self.datastore.put_A(self.self_node,j,0)
-
-
-		# self.barrier.wait()
-		# for i in range(self.matrix_size):
-		# 	if self.node_id == i:
-		# 		print "%s %s\n" % (self.datastore.A_row,self.datastore.b_elem)
-		# 	self.barrier.wait()
-
 
 		# backward
 		for i in range(self.matrix_size-1,-1,-1):
@@ -179,31 +154,31 @@ class Master(Thread):
 				self.put_b(self.get_b() - self.nodes[i].thread.solution * self.get_A(i))
 				self.put_A(i,0)
 
-		# print "Nod %s sol:%s" % (self.self_node,self.solution)
 		self.job_done.set()
 
 
 
-	def get_b(self):
-		return self.datastore.get_b(self.self_node)
-
-	def get_A(self,column):
-		return self.datastore.get_A(self.self_node,column)
-
-	def put_b(self,b):
-		self.datastore.put_b(self.self_node,b)
-	def put_A(self,column,element):
-		self.datastore.put_A(self.self_node,column,element)
-
 
 	def swap_rows(self,rp,j):
 		"""
-			Row j swapps with row rp
+			Face swap la randul rp cu randul j
+			@type row: Integer
+			@type j: Integer
+			@param rp: Randul cu care se face swap (pivotul nou)
+			@param j: Randul cu care se face swap
 		"""
+		thread_list = []
 		if self.node_id == j:
 			# Creez buffer pt trimitere
 			for i in range(self.matrix_size):
-				self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
+				t = Worker(self.self_node,i)
+				self.datastore.register_thread(self.self_node,t)
+				thread_list.append(t)
+				t.start()
+			for i in thread_list:
+				i.join()
+			# for i in range(self.matrix_size):
+			# 	self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
 			# Trimit row
 			self.nodes[rp].thread.incomming_buffer = self.outgoing_buffer
 			# Trimit b
@@ -212,7 +187,14 @@ class Master(Thread):
 		if self.node_id == rp:
 			# Creez buffer pt trimitere
 			for i in range(self.matrix_size):
-				self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
+				t = Worker(self.self_node,i)
+				self.datastore.register_thread(self.self_node,t)
+				thread_list.append(t)
+				t.start()
+			for i in thread_list:
+				i.join()
+			# for i in range(self.matrix_size):
+			# 	self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
 			# Trimit row
 			self.nodes[j].thread.incomming_buffer = self.outgoing_buffer
 			# Trimit b
@@ -252,10 +234,11 @@ class Master(Thread):
 		self.barrier.wait()
 
 		if self.node_id == row:
+
 			# Pun si valoarea mea in vector
 			self.valori_pivot[self.node_id] = self.datastore.get_A(self.self_node,row)
 
-			# Compute local max
+			# Calculez maxim local
 			maxim = -1
 			for k in range(len(self.valori_pivot)):
 				if abs(self.valori_pivot[k]) > maxim:
@@ -263,20 +246,57 @@ class Master(Thread):
 					index = k
 			if maxim == 0:
 				print "Maxim 0 matrice nesingulara"
-				print "Am calculat maxim %d pe row %d" % (maxim,index)
-			# print maxim
 
-			# broadcast la toata lumea cu indicele gasit ???
+			# Broadcast la toata lumea cu indicele
 			for i in range(self.matrix_size):
 				self.nodes[i].thread.payload_bay = index
 
+		# Astept sa puna latoata lume noul index
 		self.barrier.wait()
 
+		# Updatez indexul cu ce am primit de la row
 		if (self.node_id != row):
 			index = self.payload_bay
+
 		return index
 
 
 	def send_data_pivot(self,destination_node,data):
+		"""
+			Pune datale din data in vectorul valori_pivot din nodul destinatie
+		"""
 		destination_node.thread.valori_pivot[self.node_id] = data
 
+	def get_b(self):
+		"""
+			Wrapper peste get_b
+		"""
+		return self.datastore.get_b(self.self_node)
+
+	def get_A(self,column):
+		"""
+			Wrapper peste get_A
+		"""
+		return self.datastore.get_A(self.self_node,column)
+
+	def put_b(self,b):
+		"""
+			Wrapper peste put_b
+		"""
+		self.datastore.put_b(self.self_node,b)
+
+	def put_A(self,column,element):
+		"""
+			Wrapper peste put_A
+		"""
+		self.datastore.put_A(self.self_node,column,element)
+
+
+class Worker(Thread):
+	def __init__(self, node, element):
+		Thread.__init__(self, name = str(node))
+		self.node = node
+		self.element = element
+
+	def run(self):
+		self.node.thread.outgoing_buffer[self.element] = self.node.datastore.get_A(self.node,self.element)

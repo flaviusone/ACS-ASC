@@ -96,8 +96,9 @@ class Node:
         except(ValueError):
             print "Eroare la creare master thread"
 
-
-        return (self.node_id,self.node_id)
+        self.thread.job_done.wait()
+        # return (self.thread.solution,self.node_id)
+        return (self.thread.solution,self.node_id)
 
         # TODO other code
 
@@ -108,7 +109,6 @@ class Node:
             is invoked by the tester. This method must block until all the
             threads started by this node terminate.
         """
-
         self.thread.join()
 
         # Opresc listner

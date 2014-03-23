@@ -46,11 +46,9 @@ class Listener(Thread):
 	def set(self,destination_node,element):
 		self.semafor.acquire()
 		self.destination_node = destination_node
-		# print "Setting element %f" % element
 		self.element = element
 
 		self.event_listner.set()
-		# print "Sunt %s si am primit cerere pentru elementul %d de la %s\n" % (self.node_id, element,str(destination_node))
 
 
 class Master(Thread):
@@ -152,10 +150,8 @@ class Master(Thread):
 		for i in range(self.matrix_size-1,-1,-1):
 			if self.node_id == i:
 				self.solution = self.get_b() / self.get_A(i)
-				# print "sdadsd %d %s %s %s \n" % (i,self.solution,self.get_b(),self.get_A(i))
 			self.barrier.wait()
 			if self.node_id < i:
-				# print "I %d %s\n" % (i,str(self.nodes[i].thread.solution))
 				self.put_b(self.get_b() - self.nodes[i].thread.solution * self.get_A(i))
 				self.put_A(i,0)
 		self.job_done.set()

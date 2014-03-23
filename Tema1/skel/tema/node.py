@@ -1,3 +1,6 @@
+# Author: Tirnacop Flavius
+# Grupa: 331CA
+# Tema 1 - ASC
 """
     This module represents a cluster's computational node.
 
@@ -30,9 +33,6 @@ class Node:
         self.thread_list = []
 
 
-        # TODO other code
-
-
     def __str__(self):
         """
             Pretty prints this node.
@@ -52,7 +52,6 @@ class Node:
             @param datastore: the datastore associated with this node
         """
         self.datastore = datastore
-        # TODO other code
 
 
     def set_nodes(self, nodes):
@@ -64,7 +63,6 @@ class Node:
             @param nodes: a list containing all the nodes in the cluster
         """
         self.nodes = nodes
-        # TODO other code
 
 
     def get_x(self):
@@ -78,29 +76,27 @@ class Node:
                 vector
         """
 
-        # Pornesc listner thread
+        # Pornesc listener thread
         try:
-            self.listner = Listner(self.node_id,self.matrix_size,self.datastore,self.nodes,self.thread_list)
-            self.datastore.register_thread(self,self.listner)
-            self.thread_list.append(self.listner)
+            self.listener = Listener(self.node_id,self.matrix_size,self.datastore,self.nodes,self.thread_list)
+            self.datastore.register_thread(self,self.listener)
+            self.thread_list.append(self.listener)
         except(ValueError):
-            print "Eroare la creare master listner"
+            print "Eroare la creare master listener"
 
         # Pornesc master thread
         try:
             self.thread = Master(self.node_id,self.matrix_size,self.datastore,self.nodes,self.thread_list)
             self.datastore.register_thread(self,self.thread)
             self.thread.start()
-            self.listner.start()
+            self.listener.start()
             self.thread_list.append(self.thread)
         except(ValueError):
             print "Eroare la creare master thread"
 
         self.thread.job_done.wait()
-        # return (self.thread.solution,self.node_id)
-        return (self.thread.solution,self.node_id)
 
-        # TODO other code
+        return (self.thread.solution,self.node_id)
 
 
     def shutdown(self):
@@ -111,9 +107,7 @@ class Node:
         """
         self.thread.join()
 
-        # Opresc listner
-        self.listner.exit=1
-        self.listner.event_listner.set()
-        self.listner.join()
-
-        # TODO other code
+        # Opresc listener
+        self.listener.exit=1
+        self.listener.event_listner.set()
+        self.listener.join()

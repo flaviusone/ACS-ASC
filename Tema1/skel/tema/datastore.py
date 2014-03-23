@@ -10,6 +10,7 @@
 from random import Random
 from threading import current_thread, Semaphore
 from time import sleep
+import thread_helper
 
 
 class Datastore:

@@ -1,10 +1,13 @@
+# Author: Tirnacop Flavius
+# Grupa: 331CA
+# Tema 1 - ASC
 import sys
 import random
 from threading import Event,Thread, current_thread, Lock, Semaphore, Condition
 from time import sleep
 from barrier import ReusableBarrierSem
 
-class Listner(Thread):
+class Listener(Thread):
 	def __init__(self, node_id, matrix_size, datastore, nodes, thread_list):
 		Thread.__init__(self, name = str(node_id))
 		self.node_id = node_id
@@ -27,13 +30,11 @@ class Listner(Thread):
 			if self.exit==1:
 				break
 			# Scot element din datastore si il trimit
-			# print "%s\n" % self.datastore.A_row
 			if self.element == -1:
 				self.tmp = self.datastore.get_b(self.self_node)
 			else:
 				self.tmp = self.datastore.get_A(self.self_node,self.element)
 			self.destination_node.thread.payload_bay = self.tmp
-			# print "AM PUS BOSS %s\n" % str(self.tmp)
 			# Notific nodul destinatie ca am trimis
 			self.destination_node.thread.event_listner.set()
 			# Clear si reiau bucla
@@ -101,7 +102,6 @@ class Master(Thread):
 		# main for loop
 		for j in range(self.matrix_size):
 			rp = self.find_pivot(j)
-			self.barrier.wait()
 			self.swap_rows(rp,j)
 
 			if self.node_id > j:
@@ -112,7 +112,7 @@ class Master(Thread):
 
 				# Cer elementul j de la nodul j
 				# (am voie sa fac cache la asta conform cerintei pg3 example)
-				self.nodes[j].listner.set(self.self_node,j)
+				self.nodes[j].listener.set(self.self_node,j)
 				# Astept sa il primesc
 				self.event_listner.wait()
 				self.event_listner.clear()
@@ -122,7 +122,7 @@ class Master(Thread):
 					element = self.datastore.get_A(self.self_node,i)
 
 					# Cer elementul i de la nodul j
-					self.nodes[j].listner.set(self.self_node,i)
+					self.nodes[j].listener.set(self.self_node,i)
 					# Astept sa il primesc
 					self.event_listner.wait()
 					self.event_listner.clear()
@@ -130,10 +130,11 @@ class Master(Thread):
 
 					element -= aux1 * (aux2 / aux3)
 					self.datastore.put_A(self.self_node,i,element)
+
 				############COMPUTE B#############
 				element = self.datastore.get_b(self.self_node)
 				# Cer elementul b de la nodul j
-				self.nodes[j].listner.set(self.self_node,-1)
+				self.nodes[j].listener.set(self.self_node,-1)
 
 				# Astept sa il primesc
 				self.event_listner.wait()
@@ -145,15 +146,18 @@ class Master(Thread):
 				############COMPUTE B#############
 				self.datastore.put_A(self.self_node,j,0)
 
-		# backward
+		self.barrier.wait()
+
+		# backward substitution
 		for i in range(self.matrix_size-1,-1,-1):
 			if self.node_id == i:
 				self.solution = self.get_b() / self.get_A(i)
+				# print "sdadsd %d %s %s %s \n" % (i,self.solution,self.get_b(),self.get_A(i))
 			self.barrier.wait()
 			if self.node_id < i:
+				# print "I %d %s\n" % (i,str(self.nodes[i].thread.solution))
 				self.put_b(self.get_b() - self.nodes[i].thread.solution * self.get_A(i))
 				self.put_A(i,0)
-
 		self.job_done.set()
 
 
@@ -171,14 +175,7 @@ class Master(Thread):
 		if self.node_id == j:
 			# Creez buffer pt trimitere
 			for i in range(self.matrix_size):
-				t = Worker(self.self_node,i)
-				self.datastore.register_thread(self.self_node,t)
-				thread_list.append(t)
-				t.start()
-			for i in thread_list:
-				i.join()
-			# for i in range(self.matrix_size):
-			# 	self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
+				self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
 			# Trimit row
 			self.nodes[rp].thread.incomming_buffer = self.outgoing_buffer
 			# Trimit b
@@ -187,14 +184,7 @@ class Master(Thread):
 		if self.node_id == rp:
 			# Creez buffer pt trimitere
 			for i in range(self.matrix_size):
-				t = Worker(self.self_node,i)
-				self.datastore.register_thread(self.self_node,t)
-				thread_list.append(t)
-				t.start()
-			for i in thread_list:
-				i.join()
-			# for i in range(self.matrix_size):
-			# 	self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
+				self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
 			# Trimit row
 			self.nodes[j].thread.incomming_buffer = self.outgoing_buffer
 			# Trimit b
@@ -258,6 +248,8 @@ class Master(Thread):
 		if (self.node_id != row):
 			index = self.payload_bay
 
+		self.barrier.wait()
+
 		return index
 
 
@@ -290,13 +282,3 @@ class Master(Thread):
 			Wrapper peste put_A
 		"""
 		self.datastore.put_A(self.self_node,column,element)
-
-
-class Worker(Thread):
-	def __init__(self, node, element):
-		Thread.__init__(self, name = str(node))
-		self.node = node
-		self.element = element
-
-	def run(self):
-		self.node.thread.outgoing_buffer[self.element] = self.node.datastore.get_A(self.node,self.element)

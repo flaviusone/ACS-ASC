@@ -98,7 +98,7 @@ class Master(Thread):
 	def run(self):
 
 		# main for loop
-		for j in range(self.matrix_size):
+		for j in xrange(self.matrix_size):
 			rp = self.find_pivot(j)
 			self.swap_rows(rp,j)
 
@@ -116,7 +116,7 @@ class Master(Thread):
 				self.event_listner.clear()
 				aux3 = self.payload_bay
 
-				for i in range(j+1,self.matrix_size):
+				for i in xrange(j+1,self.matrix_size):
 					element = self.datastore.get_A(self.self_node,i)
 
 					# Cer elementul i de la nodul j
@@ -147,7 +147,7 @@ class Master(Thread):
 		self.barrier.wait()
 
 		# backward substitution
-		for i in range(self.matrix_size-1,-1,-1):
+		for i in xrange(self.matrix_size-1,-1,-1):
 			if self.node_id == i:
 				self.solution = self.get_b() / self.get_A(i)
 			self.barrier.wait()
@@ -170,7 +170,7 @@ class Master(Thread):
 		thread_list = []
 		if self.node_id == j:
 			# Creez buffer pt trimitere
-			for i in range(self.matrix_size):
+			for i in xrange(self.matrix_size):
 				self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
 			# Trimit row
 			self.nodes[rp].thread.incomming_buffer = self.outgoing_buffer
@@ -179,7 +179,7 @@ class Master(Thread):
 
 		if self.node_id == rp:
 			# Creez buffer pt trimitere
-			for i in range(self.matrix_size):
+			for i in xrange(self.matrix_size):
 				self.outgoing_buffer[i] = self.datastore.get_A(self.self_node,i)
 			# Trimit row
 			self.nodes[j].thread.incomming_buffer = self.outgoing_buffer
@@ -190,12 +190,12 @@ class Master(Thread):
 
 		# Updatez linia
 		if self.node_id == j:
-			for i in range(self.matrix_size):
+			for i in xrange(self.matrix_size):
 				self.datastore.put_A(self.self_node,i,self.incomming_buffer[i])
 			self.datastore.put_b(self.self_node,self.payload_bay)
 
 		if self.node_id == rp:
-			for i in range(self.matrix_size):
+			for i in xrange(self.matrix_size):
 				self.datastore.put_A(self.self_node,i,self.incomming_buffer[i])
 			self.datastore.put_b(self.self_node,self.payload_bay)
 
@@ -226,7 +226,7 @@ class Master(Thread):
 
 			# Calculez maxim local
 			maxim = -1
-			for k in range(len(self.valori_pivot)):
+			for k in xrange(len(self.valori_pivot)):
 				if abs(self.valori_pivot[k]) > maxim:
 					maxim = self.valori_pivot[k]
 					index = k
@@ -234,7 +234,7 @@ class Master(Thread):
 				print "Maxim 0 matrice nesingulara"
 
 			# Broadcast la toata lumea cu indicele
-			for i in range(self.matrix_size):
+			for i in xrange(self.matrix_size):
 				self.nodes[i].thread.payload_bay = index
 
 		# Astept sa puna latoata lume noul index

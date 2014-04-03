@@ -4,5 +4,7 @@ Test 3          Finished...............100% completed
 Test 4          Finished...............100% completed
 Test 5          Finished...............100% completed
 Test 6          Finished...............100% completed
-Test 7          Finished...............100% completed
+Test 7          Timeout................55% completed
 Test 8          Finished...............100% completed
+Test 9          Timeout................0% completed
+Test 10         Timeout................0% completed

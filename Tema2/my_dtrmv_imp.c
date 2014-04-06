@@ -1,8 +1,11 @@
+/* Author Flavius Costin-Tirnacop
+ * Grupa 331CA
+ * Tema 2 ASC
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
-// #include "cblas.h"
 
 void print_matrix(double *mat,unsigned int n){
 	unsigned int i,j;
@@ -14,13 +17,13 @@ void print_matrix(double *mat,unsigned int n){
 	}
 }
 
+/* Creaza o matrice superor triunghiulara cu elemente random*/
 double* create_matrix(unsigned int n){
 	double *mat;
 	unsigned int i,j;
 	mat = calloc(n*n, sizeof(double));
 
 	srand(time(NULL));
-	//o umplu  cu 1 superior triunghiular
 	for(i=0;i<n;i++){
 		for(j=i;j<n;j++){
 			mat[j+i*n]=rand();
@@ -117,6 +120,7 @@ int main(int argc,const char* argv[]){
 	printf("Timp my_dtrmv_imp at n = %u = %lf\n", n, t);
 	/*------------------------------my_dtrmv_imp------------------------------*/
 
-
+	free(mat);
+	free(vec);
 	return 0;
 }

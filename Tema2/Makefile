@@ -24,7 +24,12 @@ drawplot-opteron:
 drawplot-quad:
 	gnuplot -persist -e "set output 'Quad.png' ; set xlabel 'size'; set ylabel 'time' ;plot 'Quad.out' using 1:2 with lines title 'my_dtrmv', 'Quad.out' using 1:3 with lines title 'my_dtrmv_imp','Quad.out' using 1:4 with lines title 'cblas_dtrmv'"
 drawplot-all:
-	gnuplot -persist -e "set output 'All.png' ; set xlabel 'size'; set ylabel 'time' ;'All.out' using 1:2 with lines title 'my_dtrmv_Nehalem', 'All.out' using 1:3 with lines title 'my_dtrmv_imp_Nehalem','All.out' using 1:4 with lines title 'cblas_dtrmv_Nehalem' All.out' using 1:5 with lines title 'my_dtrmv_Opteron', 'All.out' using 1:6 with lines title 'my_dtrmv_imp_Opteron','All.out' using 1:7 with lines title 'cblas_dtrmv_Opteron', 'All.out' using 1:8 with lines title 'my_dtrmv_Quad', 'All.out' using 1:9 with lines title 'my_dtrmv_imp_Quad','All.out' using 1:10 with lines title 'cblas_dtrmv_Quad'"
+	gnuplot -persist -e "set output 'All.png' ; set xlabel 'size'; set ylabel 'time' \
+	;plot 'All.out' using 1:2 with lines title 'my_dtrmv_Nehalem', 'All.out' using 1:3 with lines title 'my_dtrmv_imp_Nehalem', \
+	'All.out' using 1:4 with lines title 'cblas_dtrmv_Nehalem','All.out' using 1:5 with lines title 'my_dtrmv_Opteron', \
+	'All.out' using 1:6 with lines title 'my_dtrmv_imp_Opteron','All.out' using 1:7 with lines title 'cblas_dtrmv_Opteron',\
+	 'All.out' using 1:8 with lines title 'my_dtrmv_Quad', 'All.out' using 1:9 with lines title 'my_dtrmv_imp_Quad', \
+	'All.out' using 1:10 with lines title 'cblas_dtrmv_Quad'"
 
 
 clean:

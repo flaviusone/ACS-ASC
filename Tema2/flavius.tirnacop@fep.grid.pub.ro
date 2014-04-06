@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
-// #include "cblas.h"
+#include "cblas.h"
 
 void print_matrix(double *mat,unsigned int n){
 	unsigned int i,j;
@@ -40,34 +40,7 @@ void my_dtrmv(const char* row, const char* uplo, const char* trans, const char*
 	{
 		out[i] = 0;
 		for ( j = i; j < n; j++ )
-			out[i] += a[j+i*n] * x[j];
-	}
-
-	for(i = 0; i < n ;i++){
-		x[i] = out[i];
-	}
-
-	return;
-}
-
-
-void my_dtrmv_imp(const char* row, const char* uplo, const char* trans, const
-	char* diag, unsigned int n, double* a, unsigned int lda, double* x,int incx){
-
-	double *out = malloc(n*sizeof(double));
-	unsigned int i,j;
-
-	for ( i = 0; i < n; i++ )
-	{
-		double *pa = a+n*i+i;
-		double *pb = &x[i];
-		register double suma=0;
-		for ( j = i; j < n; j++ ){
-			suma += *pa * *pb;
-			pb++;
-			pa++;
-		}
-		out[i] = suma;
+		out[i] += a[j+i*n] * x[j];
 	}
 
 	for(i = 0; i < n ;i++){
@@ -98,17 +71,13 @@ int main(int argc,const char* argv[]){
 	srand(time(NULL));
 	// Initializez vector
 	double *vec = malloc(n*sizeof(double));
-	double *aux = malloc(n*sizeof(double));
-	for(i=0;i<n;i++){
+	for(i=0;i<n;i++)
 		vec[i]=rand();
-		aux[i] = vec[i];
-	}
 
-
-	/*------------------------------my_dtrmv----------------------------------*/
+	/*------------------------------FUCNTIA MEA------------------------------*/
 	gettimeofday(&start,0);
 
-
+	// Fac inmultirea mea
 	my_dtrmv("CblasRowMajor","CblasUpper","CblasNoTrans","CblasNonUnit",n,mat,n,vec,1);
 
 
@@ -116,35 +85,12 @@ int main(int argc,const char* argv[]){
 
 	t= (finish.tv_sec - start.tv_sec) + (double)(finish.tv_usec - start.tv_usec)
 	 / 1000000.0;
-	printf("Timp my_dtrmv at n= %u = %lf\n", n, t);
-	/*------------------------------my_dtrmv----------------------------------*/
+	printf("Timp Functia mea = %lf\n", t);
+	/*------------------------------FUCNTIA MEA------------------------------*/
 
 
-	for(i=0;i<n;i++){
-		vec[i] = aux[i];
-	}
 
-
-	/*------------------------------my_dtrmv_imp------------------------------*/
-	gettimeofday(&start,0);
-
-
-	my_dtrmv_imp("CblasRowMajor","CblasUpper","CblasNoTrans","CblasNonUnit",n,mat,n,vec,1);
-
-
-	gettimeofday(&finish,0);
-
-	t= (finish.tv_sec - start.tv_sec) + (double)(finish.tv_usec - start.tv_usec)
-	 / 1000000.0;
-	printf("Timp my_dtrmv_imp at n = %u = %lf\n", n, t);
-	/*------------------------------my_dtrmv_imp------------------------------*/
-
-
-	for(i=0;i<n;i++){
-		vec[i] = aux[i];
-	}
-
-	/*------------------------------clblas_dtrmv------------------------------*/
+	/*------------------------------FUNCTIE BLAS------------------------------*/
 	gettimeofday(&start,0);
 
 	// Fac inmultirea - cblas
@@ -155,8 +101,8 @@ int main(int argc,const char* argv[]){
 
 	t= (finish.tv_sec - start.tv_sec) + (double)(finish.tv_usec - start.tv_usec)
 	 / 1000000.0;
-	printf("Timp cblas_dtrmv at n=%u = %lf\n", n, t);
-	/*------------------------------clblas_dtrmv------------------------------*/
+	printf("Timp Functie BLAS = %lf\n", t);
+	/*------------------------------FUNCTIE BLAS------------------------------*/
 
 
 	return 0;

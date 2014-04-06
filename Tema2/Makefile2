@@ -1,0 +1,10 @@
+OBJ=main.o
+TARGET= opteron nehalem quad
+all: build 
+
+build:
+	gcc -o opteron main.c -lcblas -latlas -L/opt/tools/libraries/atlas/3.10.1-opteron-gcc-4.4.6/lib -I/opt/tools/libraries/atlas/3.10.1-opteron-gcc-4.4.6/include
+	gcc -o nehalem main.c -lcblas -latlas -L/opt/tools/libraries/atlas/3.10.1-nehalem-gcc-4.4.6/lib -I/opt/tools/libraries/atlas/3.10.1-nehalem-gcc-4.4.6/include
+	gcc -o quad main.c -lcblas -latlas -L/opt/tools/libraries/atlas/3.10.1-quad-gcc-4.4.6/lib -I/opt/tools/libraries/atlas/3.10.1-quad-gcc-4.4.6/include
+clean:
+	rm -rf $(OBJ) $(TARGET) *~

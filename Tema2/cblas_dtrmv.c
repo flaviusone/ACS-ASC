@@ -98,50 +98,8 @@ int main(int argc,const char* argv[]){
 	srand(time(NULL));
 	// Initializez vector
 	double *vec = malloc(n*sizeof(double));
-	double *aux = malloc(n*sizeof(double));
 	for(i=0;i<n;i++){
 		vec[i]=rand();
-		aux[i] = vec[i];
-	}
-
-
-	/*------------------------------my_dtrmv----------------------------------*/
-	gettimeofday(&start,0);
-
-
-	my_dtrmv("CblasRowMajor","CblasUpper","CblasNoTrans","CblasNonUnit",n,mat,n,vec,1);
-
-
-	gettimeofday(&finish,0);
-
-	t= (finish.tv_sec - start.tv_sec) + (double)(finish.tv_usec - start.tv_usec)
-	 / 1000000.0;
-	printf("Timp my_dtrmv at n= %u = %lf\n", n, t);
-	/*------------------------------my_dtrmv----------------------------------*/
-
-
-	for(i=0;i<n;i++){
-		vec[i] = aux[i];
-	}
-
-
-	/*------------------------------my_dtrmv_imp------------------------------*/
-	gettimeofday(&start,0);
-
-
-	my_dtrmv_imp("CblasRowMajor","CblasUpper","CblasNoTrans","CblasNonUnit",n,mat,n,vec,1);
-
-
-	gettimeofday(&finish,0);
-
-	t= (finish.tv_sec - start.tv_sec) + (double)(finish.tv_usec - start.tv_usec)
-	 / 1000000.0;
-	printf("Timp my_dtrmv_imp at n = %u = %lf\n", n, t);
-	/*------------------------------my_dtrmv_imp------------------------------*/
-
-
-	for(i=0;i<n;i++){
-		vec[i] = aux[i];
 	}
 
 	/*------------------------------clblas_dtrmv------------------------------*/

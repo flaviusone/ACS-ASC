@@ -1,0 +1,12 @@
+Nehalem
+Timp my_dtrmv at n= 5000 = 0.076783
+Timp my_dtrmv_imp at n = 5000 = 0.015015
+Timp cblas_dtrmv at n=5000 = 0.012963
+Opteron
+Timp my_dtrmv at n= 5000 = 0.098850
+Timp my_dtrmv_imp at n = 5000 = 0.027103
+Timp cblas_dtrmv at n=5000 = 0.018126
+Quad
+Timp my_dtrmv at n= 5000 = 0.118197
+Timp my_dtrmv_imp at n = 5000 = 0.032698
+Timp cblas_dtrmv at n=5000 = 0.034304

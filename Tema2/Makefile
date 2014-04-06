@@ -6,7 +6,7 @@ CC=gcc
 CFLAGS=-g -Wall
 OBJ=main.o
 TARGET=main
-MAT_SIZE=10
+MAT_SIZE=10000
 
 
 

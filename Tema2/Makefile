@@ -44,7 +44,7 @@ build:
 	-I/opt/tools/libraries/atlas/3.10.1-quad-gcc-4.4.6/include
 
 drawplot-nehalem:
-	gnuplot -persist -e ""set output 'Nehalem.png' ; set xlabel 'size'; \
+	gnuplot -persist -e "set output 'Nehalem.png' ; set xlabel 'size'; \
 	set ylabel 'time' ; plot 'Nehalem.out' using 1:2 with lines title \
 	'my_dtrmv', 'Nehalem.out'using 1:3 with lines title 'my_dtrmv_imp', \
 	'Nehalem.out' using 1:4 with lines title 'cblas_dtrmv'"

@@ -23,4 +23,8 @@
  	"de mana" cu timpii obtinuti de scripturile rulate pe cele 3 arhitecturi
  	folosite in special pentru gnuplot
 
- 	- Nehalem.png, Opteron.png, Quad.png, All.png - fisiere
+ 	- Nehalem.png, Opteron.png, Quad.png, All.png - fisierele output date de
+ 	rularea cu gnuplot pentru cele 3 arhitecturi cu cei 3 timpi pentru fiecare 
+ 	rulare cat si pentru toate 3 arhitecturile puse la un loc (cu cei 9 timpi)
+
+ 	

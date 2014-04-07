@@ -1,0 +1,26 @@
+/* Author: Flavius Costin Tirnacop
+ * Grupa: 331CA
+ * Tema 2 ASC
+ * Aprilie 2014
+ */
+
+ --0.In implementarea temei s-a studiat cazul unei matrice ne transpuse superor 
+ triunghiulare, fara 1 pe diagonala principala umpluta cu numere random generate
+ in prealabil.
+
+ --1.Fisiere arhiva:
+
+ 	- my_dtrmv.c 	 -	fisier sursa ce contine functia main si functia 
+ 	implementata de mine "de mana" ce inmulteste o matrice cu un vector coloana
+ 	
+ 	- my_dtrmv_imp.c -	fisier sursa ce contine functia main si functia 
+ 	imbunatatita a functiei implementate de mine "de mana" 
+ 	
+ 	- cblas_dtrmv.c  -	fisier sursa ce contine functia main si functia de 
+ 	biblioteca cblas_dtrmv
+ 	
+ 	- Nehalem.out, Opteron.out, Quad.out, All.out - fisierele generate de mine 
+ 	"de mana" cu timpii obtinuti de scripturile rulate pe cele 3 arhitecturi
+ 	folosite in special pentru gnuplot
+
+ 	- Nehalem.png, Opteron.png, Quad.png, All.png - fisiere

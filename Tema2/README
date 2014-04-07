@@ -27,4 +27,68 @@
  	rularea cu gnuplot pentru cele 3 arhitecturi cu cei 3 timpi pentru fiecare 
  	rulare cat si pentru toate 3 arhitecturile puse la un loc (cu cei 9 timpi)
 
- 	
+ 	- script.sh - script ce se ocupa de submisia de joburi (ruleaza la randul
+ 	sau run_nehalem.sh, run_opteron.sh, run_quad.sh)
+
+ 	- run_nehalem.sh, run_opteron.sh, run_quad.sh - scripturile executate pe
+ 	cele 3 noduri.Aceste scripturi ruleaza executabilele pentru cele 3 functii
+ 	separat cu un parametru dat pentru dimensiunea matricei
+
+ 	- Makefile cu regulile:
+ 		-build: genereaza 9 executabile - cate 3 (corespunzatoare celor 3 functii)
+ 		-pentru toate cele 3 arhitecturi
+ 		-drawplot-nehalem: apeleaza gnuplot pe fisierul Nehalem.out
+ 		-drawplot-opteron: apeleaza gnuplot pe fisierul Opteron.out
+ 		-drawplot-quad: apeleaza gnuplot pe fisierul Quad.out
+ 		-drawplot-all: apeleaza gnuplot pe fisierul Alllem.out
+
+ 	- README
+
+ --2.Implementare:
+
+ 	- Se primeste ca parametru in linia de comanda dimensiunea matricei si se
+ 	genereaza matricea superior triunghiulara cat si vectorul de inmultit cu
+ 	elemente random
+
+ 	- varianta de mana este o parcurgere seriala cu doua for-uri fara flaguri
+ 	de optimizare ale compilatorului
+
+ 	- varianta optimizata din my_dtrmv_imp ce foloseste imbunatatiri precum 
+ 	calculul sumei ce urmeaza sa fie pusa la vectorul rezultat intr-o variabila
+ 	de tip register (mai rapida).Evitarea folosirii indecsilor pentru a scoate
+ 	elemente din matrice si din vector prin folosirea de pointeri.De asemenea
+ 	varianta optimizata se foloseste si de flaguri de optimizare precum -O3 etc.
+
+ 	- varianta de biblioteca cblas_dtrmv cu parametrii specificati la punctul 0.
+
+ --3.Testare:
+
+ 	- inainte de a rula oficial implementarile am rulat cu niste numere mai mici
+ 	si am verificat outputul functiilor mele cu cel intors de cblas_dtrmv pentru
+ 	a sti sigur ca obtin aceleasi rezultate.
+
+ --4.Concluzii:
+
+ 	- dupa cum se poate observa si in plotul cu toate rularile "All.png" se observa
+ 	clar o diferenta de timp constanta pe toate cele trei functii intre cele 
+ 	trei arhitecturi dupa forma:
+ 	(la size 25000)	
+ 		Timp Nehalem < Timp Opteron < Timp quad 
+ 		Min 0.278573 < Min 0.428411 < Min 0.718526
+ 		Max 1.905779 < Max 2.462109 < Max 2.937950
+
+ 	- se poate observa ca aproximativ pe toate platformele varianta bruta se 
+ 	comporta de 5-6 ori mai lent fata de cea otimizata ajungand in cazul Nehalem
+ 	sa se comporte de aproape 10 ori.Se observa ca pe nehalem variantele optimizate
+ 	scaleaza mai bine fata de celelalte arhitecturi.
+
+ 	- de asemenea se poate observa ca pe quad varianta optimizata se aproipe cel
+ 	mai mult de cea de biblioteca.
+
+ 	- Nehalem fiind o arhitectura mai noua va avea performante mai bune.
+
+ --5.Bonus:
+
+ 	- se poate observa o inbunatatire de pana la 95% a functiei my_dtrmv_imp fata
+ 	de functia de biblioteca cblas_dtrmv pe toate arhitecturile.
+

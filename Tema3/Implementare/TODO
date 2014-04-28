@@ -1,0 +1,11 @@
+ppu:
+- citire imagine
+- pornire cate 8/4/2 threads pentru citire imagine (intr-un while)
+- construiesti imaginea
+phase 2
+- pornire cate 8 bla bla bla
+- reconstruiesti imagine initiala
+
+spu:
+- cu cache citesti intr-un vector de 8x8 elementele
+- si le pui la adresele din matrice

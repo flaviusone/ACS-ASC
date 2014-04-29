@@ -61,6 +61,18 @@ int main(int argc, char* argv[])
 	pthread_t threads[MAX_SPU_THREADS];
 	thread_arg_t thread_arg[MAX_SPU_THREADS];
 
+	/*----------------------------------Vars---------------------------------*/
+	int mod, num_spus;
+	struct img image, image2;
+	struct c_img c_image;
+	struct timeval t1, t2, t3, t4;
+	double total_time = 0, scale_time = 0;
+	/*----------------------------------Vars---------------------------------*/
+
+	/*---------------Read Image-------------*/
+	mod = atoi(argv[1]);
+	num_spus = atoi(argv[2]);
+	read_pgm(argv[3], &image);	
 	/*
 	 * Determine the number of SPE threads to create.
 	 */
@@ -72,7 +84,7 @@ int main(int argc, char* argv[])
 	 * Create several SPE-threads to execute 'simple_spu'.
 	 */
 
-	for(i = 0; i < spu_threads; i++) {
+	for(i = 0; i < num_spus; i++) {
 
 		/* Create thread for each SPE context */
 		thread_arg[i].cellno = i;
@@ -83,13 +95,13 @@ int main(int argc, char* argv[])
 	}
 
 	/* Wait for SPU-thread to complete execution.  */
-	for (i = 0; i < spu_threads; i++) {
+	for (i = 0; i < num_spus; i++) {
 		if (pthread_join (threads[i], NULL)) {
 			perror("Failed pthread_join");
 			exit (1);
 		}
 	}
-	printf("\n Parametrii %s %s %s %s %s \n",argv[1],argv[2],argv[3],argv[4],argv[5]);
+	printf("\n Parametrii %d %d %s %s %s \n",mod,num_spus,argv[3],argv[4],argv[5]);
 	printf("\nThe program has successfully executed.\n");
 	return 0;
 }

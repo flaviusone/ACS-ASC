@@ -11,62 +11,59 @@
 
 extern spe_program_handle_t lab6_spu;
 
-#define MAX_SPU_THREADS   16
+#define MAX_SPU_THREADS   8
 
 typedef struct {
+	spe_context_ptr_t ctx;
 	int cellno;
 	struct img *image;
 } thread_arg_t;
-
-typedef struct {
-	int x, y;
-} test_t;
 
 void *ppu_pthread_function(void *thread_arg) {
 
 	spe_context_ptr_t ctx;
 	thread_arg_t *arg = (thread_arg_t *) thread_arg;
-	test_t test;
-	test.x = 12;
-	test.y = 13;
 
-	/* Create SPE context */
-
-	if ((ctx = spe_context_create (0, NULL)) == NULL) {
-		perror ("Failed creating context");
-		exit (1);
-	}
-
-	/* Load SPE program into context */
-
-	if (spe_program_load (ctx, &lab6_spu)) {
-		perror ("Failed loading program");
-		exit (1);
-	}
-
+	ctx = arg->ctx;
+	// printf("BOOM %d\n", arg->cellno);
 
 	/* Run SPE context */
+	// spe_in_mbox_write(ctx, arg->image->width, 1, SPE_MBOX_ANY_NONBLOCKING);
 
 	unsigned int entry = SPE_DEFAULT_ENTRY;
-	if (spe_context_run(ctx, &entry, 0, (void *)arg->image->pixels, (void *) &test, NULL) < 0) {
+	if (spe_context_run(ctx, &entry, 0, (void *)arg->image->pixels, (void *) arg->cellno, NULL) < 0) {
 		perror ("Failed running context");
-		exit (1);
-	}
-
-	/* Destroy context */
-
-	if (spe_context_destroy (ctx) != 0) {
-		perror("Failed destroying context");
 		exit (1);
 	}
 
 	pthread_exit(NULL);
 }
 
+
+/*
+ * threads used to keep communication with the SPE's
+ */
+void *comm_pthread_function(void* argument) {
+
+	spe_context_ptr_t ctx;
+   	thread_arg_t arg = *(thread_arg_t *) argument;
+
+   	ctx = arg.ctx;
+
+   	while(1)
+	/* Send witdh and height to all SPE's */
+	spe_in_mbox_write(ctx, arg.image->width, 1, SPE_MBOX_ANY_NONBLOCKING);
+
+   	pthread_exit(NULL);
+}
+
+
 int main(int argc, char* argv[])
 {
 	int i, j;
+	spe_context_ptr_t ctxs[MAX_SPU_THREADS];
 	pthread_t threads[MAX_SPU_THREADS];
+	pthread_t comm_threads[MAX_SPU_THREADS];
 	thread_arg_t thread_arg[MAX_SPU_THREADS];
 
 	/*----------------------------------Vars---------------------------------*/
@@ -97,17 +94,52 @@ int main(int argc, char* argv[])
 		/* Create thread for each SPE context */
 		thread_arg[i].cellno = i;
 		thread_arg[i].image = &image;
+
+		/* Create context */
+		if ((ctxs[i] = spe_context_create (0, NULL)) == NULL) {
+		   perror ("Failed creating context");
+		   exit (1);
+		}
+    	/* Load program into context */
+		if (spe_program_load (ctxs[i], &lab6_spu)) {
+		   perror ("Failed loading program");
+		   exit (1);
+		}
+
+		thread_arg[i].ctx = ctxs[i];
+
 		if (pthread_create (&threads[i], NULL, &ppu_pthread_function, &thread_arg[i]))  {
 			perror ("Failed creating thread");
 			exit (1);
 		}
 	}
 
+	for(i = 0; i < num_spus; i++) {
+      if (pthread_create (&comm_threads[i], NULL, &comm_pthread_function, &thread_arg[i])) {
+         perror ("Failed creating thread");
+         exit (1);
+      }
+	}
+
+   /* Wait for comm-thread to complete execution. */
+   for (i=0; i<num_spus; i++) {
+      if (pthread_join (comm_threads[i], NULL)) {
+         perror("Failed pthread_join");
+         exit (1);
+      }
+   }
+
 	/* Wait for SPU-thread to complete execution.  */
 	for (i = 0; i < num_spus; i++) {
 		if (pthread_join (threads[i], NULL)) {
 			perror("Failed pthread_join");
 			exit (1);
+		}
+
+		/* Destroy context */
+		if (spe_context_destroy (ctxs[i]) != 0) {
+		 perror("Failed destroying context");
+		 exit (1);
 		}
 	}
 

@@ -44,7 +44,7 @@ void read_pgm(char* path, struct img* in_img){
 	if (token == NULL){
 		fprintf(stderr, "Expected token when reading from %s\n", path);
 		exit(0);
-	}	
+	}
 	in_img->width = atoi(token);
 	token = strtok(NULL, " ");
 	if (token == NULL){
@@ -61,8 +61,8 @@ void read_pgm(char* path, struct img* in_img){
 	read_line(fd, path, buf, BUF_SIZE);
 
 	//allocate memory for image pixels
-	tmp_pixels = (char*) _alloc(in_img->width * in_img->height);	
-	in_img->pixels = (short int*) _alloc(in_img->width * in_img->height *
+	tmp_pixels = (char*) _alloc(2*in_img->width * 2*in_img->height);
+	in_img->pixels = (short int*) _alloc(2*in_img->width * 2*in_img->height *
 			sizeof (short int));
 
 	_read_buffer(fd, tmp_pixels, in_img->width * in_img->height);
@@ -77,7 +77,7 @@ void read_pgm(char* path, struct img* in_img){
 }
 
 void write_pgm(char* path, struct img* out_img){
-	int fd, bytes_written, left_to_write; 
+	int fd, bytes_written, left_to_write;
 	char *ptr, buf[BUF_SIZE];
 	unsigned char* tmp_pixels;
 	int i;
@@ -88,7 +88,7 @@ void write_pgm(char* path, struct img* out_img){
 	strcpy(buf, "P5\n");
 	_write_buffer(fd, buf, strlen(buf));
 
-	//write comment 
+	//write comment
 	strcpy(buf, "#Created using BTC\n");
 	_write_buffer(fd, buf, strlen(buf));
 

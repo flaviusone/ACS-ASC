@@ -19,44 +19,38 @@ typedef struct {
 	struct img *image;
 } thread_arg_t;
 
+void bin(unsigned   n)
+{
+    unsigned   i;
+    for (i = 1 << 31; i > 0; i = i / 2)
+        (n & i)? printf("1"): printf("0");
+}
+
 void *ppu_pthread_function(void *thread_arg) {
 
 	spe_context_ptr_t ctx;
 	thread_arg_t *arg = (thread_arg_t *) thread_arg;
-
 	ctx = arg->ctx;
-	// printf("BOOM %d\n", arg->cellno);
+	 long long cellno,width,height;
+	unsigned long long payload=0;
+	cellno = ( long long)arg->cellno;
+	width =( long long)  arg->image->width;
+	height =( long long)  arg->image->height;
 
-	/* Run SPE context */
-	// spe_in_mbox_write(ctx, arg->image->width, 1, SPE_MBOX_ANY_NONBLOCKING);
+	payload |= cellno;
+	payload |= (width << 8);
+	payload |= (height << 16);
+
+
 
 	unsigned int entry = SPE_DEFAULT_ENTRY;
-	if (spe_context_run(ctx, &entry, 0, (void *)arg->image->pixels, (void *) arg->cellno, NULL) < 0) {
+	if (spe_context_run(ctx, &entry, 0, (void *)arg->image->pixels, (void *) payload, NULL) < 0) {
 		perror ("Failed running context");
 		exit (1);
 	}
 
 	pthread_exit(NULL);
 }
-
-
-/*
- * threads used to keep communication with the SPE's
- */
-void *comm_pthread_function(void* argument) {
-
-	spe_context_ptr_t ctx;
-   	thread_arg_t arg = *(thread_arg_t *) argument;
-
-   	ctx = arg.ctx;
-
-   	while(1)
-	/* Send witdh and height to all SPE's */
-	spe_in_mbox_write(ctx, arg.image->width, 1, SPE_MBOX_ANY_NONBLOCKING);
-
-   	pthread_exit(NULL);
-}
-
 
 int main(int argc, char* argv[])
 {
@@ -79,12 +73,12 @@ int main(int argc, char* argv[])
 	num_spus = atoi(argv[2]);
 	read_pgm(argv[3], &image);
 
-	// for(i=0;i<image.width;i++){
-	// 	for(j=0;j<image.height;j++){
-	// 		printf("%d ",image.pixels[i*image.width+j]);
-	// 	}
-	// 	printf("\n");
-	// }
+	for(i=0;i<image.width*2;i++){
+		for(j=0;j<image.height*2;j++){
+			printf("%d ",image.pixels[i*image.width*2+j]);
+		}
+		printf("\n");
+	}
 
 	/*
 	 * Create several SPE-threads to execute 'simple_spu'.
@@ -113,21 +107,6 @@ int main(int argc, char* argv[])
 			exit (1);
 		}
 	}
-
-	for(i = 0; i < num_spus; i++) {
-      if (pthread_create (&comm_threads[i], NULL, &comm_pthread_function, &thread_arg[i])) {
-         perror ("Failed creating thread");
-         exit (1);
-      }
-	}
-
-   /* Wait for comm-thread to complete execution. */
-   for (i=0; i<num_spus; i++) {
-      if (pthread_join (comm_threads[i], NULL)) {
-         perror("Failed pthread_join");
-         exit (1);
-      }
-   }
 
 	/* Wait for SPU-thread to complete execution.  */
 	for (i = 0; i < num_spus; i++) {

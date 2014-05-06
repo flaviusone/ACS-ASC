@@ -62,7 +62,7 @@ int main(unsigned long long speid,
 	/* Umplu blockul cu date din cache */
 	for(i = 0 ; i < 8 ; i++){
 		for(j = 0 ; j < 8 ; j++){
-			block[i*8+j] = cache_rd(CACHE,start + cellno * (2-1) * 2 * width * 8 + i*height + j);
+			block[i*8+j] = cache_rd(CACHE,start + cellno * (no_rows-1) * width * 8 + i*height + j);
 		}
 	}
 

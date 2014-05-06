@@ -74,9 +74,10 @@ int main(int argc, char* argv[])
 	read_pgm(argv[3], &image);
 
 	for(i=0;i<image.width*2;i++){
-		for(j=0;j<image.height*2;j++){
-			printf("%d ",image.pixels[i*image.width*2+j]);
+		for(j=0;j<image.height;j++){
+			printf("%d ",image.pixels[i*image.width+j]);
 		}
+		printf("\n");
 		printf("\n");
 	}
 

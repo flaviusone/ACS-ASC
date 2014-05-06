@@ -61,8 +61,8 @@ void read_pgm(char* path, struct img* in_img){
 	read_line(fd, path, buf, BUF_SIZE);
 
 	//allocate memory for image pixels
-	tmp_pixels = (char*) _alloc(2*in_img->width * 2*in_img->height);
-	in_img->pixels = (short int*) _alloc(2*in_img->width * 2*in_img->height *
+	tmp_pixels = (char*) _alloc(in_img->width * 2*in_img->height);
+	in_img->pixels = (short int*) _alloc(in_img->width * 2*in_img->height *
 			sizeof (short int));
 
 	_read_buffer(fd, tmp_pixels, in_img->width * in_img->height);

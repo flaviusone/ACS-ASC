@@ -1,0 +1,10 @@
+Alex O., May 6th, 2011
+Matrix multiplication example
+
+Build:
+make noshare - the version without shared memory
+make share - the version with shared memory
+
+Run:
+./matmul
+

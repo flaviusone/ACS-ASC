@@ -25,6 +25,7 @@ __global__ void MatAdd(float *A, float *B, float *C) {
 
 int main() {
     int i = 0;
+    int correct = 1;
     float a[N*N], b[N*N], c[N*N];
     float *A, *B, *C;
     float *pgpu = (float*) malloc(N*N*sizeof(float));
@@ -63,8 +64,7 @@ int main() {
     cudaFree(B);
     cudaFree(C);
 
-    /* Check if passed*/
-    int correct = 1;
+    // check consistency
     for(i = 0; i < N*N; i++) {
         if (abs(c[i] - pgpu[i])>MAX_ERR) correct = 0;
     }

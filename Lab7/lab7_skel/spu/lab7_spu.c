@@ -33,36 +33,7 @@ int main(unsigned long long speid){
 			mbox_data = spu_read_in_mbox();
 			printf("[SPU %d] received data=%d.Processing...\n", (int) speid, (int)mbox_data);
 
-			if(mbox_data>79){
-				printf("[SPU %d] Job done...\n", (int) speid);
-				break;
-			}
-
-			while(1){
-				if (spu_stat_out_mbox() > 0) {
-					printf("[SPU %d] sending data=%d ...\n", (int) speid, (int)mbox_data);
-					spu_write_out_mbox((uint32_t) mbox_data);
-					break;
-				} else {
-					printf("Mailbox full.Retrying...\n");
-				}
-			}
-
-
 		}
-
-		 sum = 0;
-		 if (val<=CHUNKS) {
-
-				 //TODO: Task4 - adunati vectorial prima jumatate a chunk-ului cu a doua jumatate si puneti rezultatul in buffer
-
-		 }
-
-			 //TODO: Task2 - trimite un intreg de la SPU la PPU
-
-
-
-
 		return 0;
 }
 

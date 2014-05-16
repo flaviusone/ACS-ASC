@@ -21,8 +21,8 @@ typedef struct{
 	short int cellno;
 } de_test;
 
-unsigned int block[64] __attribute__ ((aligned(16)));
-unsigned int avg[64] __attribute__ ((aligned(16)));
+ int block[64] __attribute__ ((aligned(16)));
+ int avg[64] __attribute__ ((aligned(16)));
 
 #define CACHE_NAME CACHE
 #define CACHED_TYPE short int
@@ -71,7 +71,7 @@ int main(unsigned long long speid,
 
 		sleep(cellno);
 		/* Cast la vector */
-		vector unsigned int *vblock = (vector unsigned int *) block;
+		vector unsigned long *vblock = (vector unsigned long *) block;
 
 		/* Calculez avg */
 		average = 0;
@@ -86,8 +86,8 @@ int main(unsigned long long speid,
 		}
 
 		/* Cast la vector */
-		vector unsigned int *vavg = (vector unsigned int *) avg;
-		
+		vector unsigned long *vavg = (vector unsigned long *) avg;
+
 		printf("VBlock\n\n");
 		for (i=0; i<64; i++)
      	printf("%d ", vblock[i]);
@@ -95,7 +95,7 @@ int main(unsigned long long speid,
 		for (i=0; i<64; i++)
      	printf("%d ", vavg[i]);
 
-     
+
 		/* Pt debug */
 		printf("Sunt %d si am:\n", cellno);
 		for(i = 0 ; i < 8 ; i++){

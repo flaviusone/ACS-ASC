@@ -48,19 +48,9 @@ void *comm_pthread_function(void* argument) {
    // pana la primirea de SPU a unei valori > CHUNKS
 
       //TODO: Task1 - trimite un intreg de la PPU la SPU
-    while(1){
+    arg.count = 42;
       // scriem o intrare in mailbox; in mod sigur trimitem un singur mesaj pentru fiecare SPU asa ca nu e nevoie sa fie blocant
       spe_in_mbox_write(arg.ctx, arg.count, 1, SPE_MBOX_ANY_NONBLOCKING);
-
-      // //TODO: Task2 - trimite un intreg de la SPU la PPU
-      while (spe_out_mbox_status(arg.ctx) == 0) { ; }
-      spe_out_mbox_read (arg.ctx, &mbox_data, 1);
-      printf("[PPU] Recieved response=%d\n",mbox_data);
-      if(arg.count > 80) break;
-   }
-      pthread_mutex_lock(arg.sum_lock);
-      (*(arg.sum)) += (int)sum;
-      pthread_mutex_unlock(arg.sum_lock);
 
    pthread_exit(NULL);
 }

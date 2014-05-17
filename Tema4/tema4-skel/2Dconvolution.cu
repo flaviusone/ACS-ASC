@@ -111,7 +111,7 @@ void GenerateRandomMatrix(Matrix m)
 ////////////////////////////////////////////////////////////////////////////////
 // main
 ////////////////////////////////////////////////////////////////////////////////
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
     int width = 0, height = 0;
     FILE *f, *out;
@@ -129,26 +129,26 @@ int main(int argc, char** argv)
     Matrix N;//matrice inițială de pe host
     Matrix P;//rezultat fără memorie partajată calculat pe GPU
     Matrix PS;//rezultatul cu memorie partajată calculat pe GPU
-    
+
     M = AllocateMatrix(KERNEL_SIZE, KERNEL_SIZE);
-    N = AllocateMatrix(width, height);        
+    N = AllocateMatrix(width, height);
     P = AllocateMatrix(width, height);
     PS = AllocateMatrix(width, height);
 
     GenerateRandomMatrix(M);
     GenerateRandomMatrix(N);
-    
+
 
     // M * N pe device
     ConvolutionOnDevice(M, N, P);
-    
+
     // M * N pe device cu memorie partajată
     ConvolutionOnDeviceShared(M, N, PS);
 
     // calculează rezultatul pe CPU pentru comparație
     Matrix reference = AllocateMatrix(P.width, P.height);
     computeGold(reference.elements, M.elements, N.elements, N.height, N.width);
-        
+
     // verifică dacă rezultatul obținut pe device este cel așteptat
     int res = CompareMatrices(reference, P);
     printf("Test global %s\n", (1 == res) ? "PASSED" : "FAILED");
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
     int ress = CompareMatrices(reference, PS);
     printf("Test shared %s\n", (1 == ress) ? "PASSED" : "FAILED");
     fprintf(out, "Test shared %s %s\n", argv[1], (1 == ress) ? "PASSED" : "FAILED");
-   
+
     // Free matrices
     FreeMatrix(&M);
     FreeMatrix(&N);
@@ -190,7 +190,7 @@ void ConvolutionOnDevice(const Matrix M, const Matrix N, Matrix P)
     //TODO: setați configurația de rulare a kernelului
 
     sdkStartTimer(&kernelTime);
-    //TODO: lansați în execuție kernelul    
+    //TODO: lansați în execuție kernelul
     cudaThreadSynchronize();
     sdkStopTimer(&kernelTime);
     printf ("Timp execuție kernel: %f ms\n", sdkGetTimerValue(&kernelTime));
@@ -214,7 +214,7 @@ void ConvolutionOnDeviceShared(const Matrix M, const Matrix N, Matrix P)
     //TODO: setați configurația de rulare a kernelului
 
     sdkStartTimer(&kernelTime);
-    //TODO: lansați în execuție kernelul    
+    //TODO: lansați în execuție kernelul
     cudaThreadSynchronize();
     sdkStopTimer(&kernelTime);
     printf ("Timp execuție kernel cu memorie partajată: %f ms\n", sdkGetTimerValue(&kernelTime));
@@ -228,6 +228,10 @@ Matrix AllocateDeviceMatrix(int width, int height)
 {
     Matrix m;
     //TODO: alocați matricea și setați width, pitch și height
+    m.width = m.pitch = width;
+    m.height = height;
+    int size = m.width * m.height * sizeof(float);
+    cudaMalloc((void **) &m.elements, size);
     return m;
 }
 
@@ -237,10 +241,10 @@ Matrix AllocateMatrix(int width, int height)
     Matrix M;
     M.width = M.pitch = width;
     M.height = height;
-    int size = M.width * M.height;    
+    int size = M.width * M.height;
     M.elements = (float*) malloc(size*sizeof(float));
     return M;
-}    
+}
 
 // Eliberează o matrice de pe device
 void FreeDeviceMatrix(Matrix* M)

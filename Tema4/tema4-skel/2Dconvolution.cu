@@ -1,3 +1,13 @@
+/**
+ * Tema 4 ASC - 2D Convolution
+ *
+ * Copyright (C) 2014, Flavius Tirnacop 331CA <flavius.tirnacop@cti.pub.ro>
+ *
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ *
+ */
+
 /*
  * Copyright 1993-2006 NVIDIA Corporation.  All rights reserved.
  *
@@ -177,6 +187,7 @@ int main(int argc, char** argv)
 ////////////////////////////////////////////////////////////////////////////////
 void ConvolutionOnDevice(const Matrix M, const Matrix N, Matrix P)
 {
+    size_t size;
     Matrix Md, Nd, Pd; //matricele corespunzătoare de pe device
 
     //pentru măsurarea timpului de execuție în kernel
@@ -184,18 +195,35 @@ void ConvolutionOnDevice(const Matrix M, const Matrix N, Matrix P)
     sdkCreateTimer(&kernelTime);
     sdkResetTimer(&kernelTime);
     //TODO: alocați matricele de pe device
+    Md = AllocateDeviceMatrix(M.width, M.height);
+    Nd = AllocateDeviceMatrix(N.width, N.height);
+    Pd = AllocateDeviceMatrix(P.width, P.height);
 
     //TODO: copiați datele de pe host (M, N) pe device (MD, Nd)
+    size = M.width * M.height * sizeof(float);
+    cudaMemcpy(Md.elements, M.elements, size, cudaMemcpyHostToDevice);
+    size = N.width * N.height * sizeof(float);
+    cudaMemcpy(Nd.elements, N.elements, size, cudaMemcpyHostToDevice);
 
     //TODO: setați configurația de rulare a kernelului
+    dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
+    dim3 dimGrid(N.width / dimBlock.x, N.height / dimBlock.y);
 
     sdkStartTimer(&kernelTime);
     //TODO: lansați în execuție kernelul
+    ConvolutionKernel<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
+
     cudaThreadSynchronize();
     sdkStopTimer(&kernelTime);
     printf ("Timp execuție kernel: %f ms\n", sdkGetTimerValue(&kernelTime));
     //TODO: copiaţi rezultatul pe host
-    //TODO: eliberați memoria matricelor de pe device
+    size = P.width * P.height * sizeof(float);
+    cudaMemcpy(P.elements, Pd.elements, size, cudaMemcpyDeviceToHost);
+
+    //TODO: eliberați memoria matricelor de pe device\
+    FreeDeviceMatrix(&Md);
+    FreeDeviceMatrix(&Nd);
+    FreeDeviceMatrix(&Pd);
 }
 
 

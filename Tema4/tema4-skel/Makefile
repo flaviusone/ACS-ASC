@@ -1,7 +1,7 @@
-CFLAGS += 
+CFLAGS +=
 
 a.out: *.cu *.cpp
-	nvcc -I$(CUDA_PATH)/samples/common/inc/ $^
+	nvcc -arch=sm_20 -I$(CUDA_PATH)/samples/common/inc/ $^
 
 clean:
 	rm a.out

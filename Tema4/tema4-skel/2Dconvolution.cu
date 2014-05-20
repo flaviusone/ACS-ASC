@@ -84,18 +84,12 @@ __global__ void ConvolutionKernel(Matrix M, Matrix N, Matrix P)
     float sum=0;
     int m,n;
 
-    if ((row >= N.height) || (col >= N.width)) return;
+    if ((row >= N.height) || (col >= N.width) || (row < 0) || (col < 0)) return;
 
     for (m = 0 ; m < 5 ; m++)
         for (n=0 ; n < 5 ; n++) {
-            // if (((row + m - 2) >= 0) && ((row + m - 2) < N.height) &&
-            //     ((col + n - 2) >= 0) && ((col + n - 2) < N.width))
-            //     sum += M.elements[m*M.width+n] * N.elements[(row+m-2) * N.width+(col+n-2)];
-            if((row >= 0) && (row < N.height) && (col >= 0) && (col < N.width)){
-                if((m > 0) || (m < N.width) || (n > 0) || (n < N.height))
+                if((row+m-2 >= 0) && (row+m-2 < N.height) && (col+n-2 >= 0) && (col+n-2 < N.height))
                     sum += M.elements[m*M.width+n] * N.elements[(row+m-2) * N.width+(col+n-2)];
-
-            }
         }
     P.elements[row*P.width+col] = sum;
 
@@ -121,9 +115,11 @@ int CompareMatrices(Matrix A, Matrix B)
     if(A.width != B.width || A.height != B.height || A.pitch != B.pitch)
         return 0;
     int size = A.width * A.height;
-    for(i = 0; i < size; i++)
+    for(i = 0; i < size; i++){
+        printf("A=%d B=%d\n", A.elements[i] , B.elements[i]);
         if(fabs(A.elements[i] - B.elements[i]) > MAX_ERR)
             return 0;
+    }
     return 1;
 }
 void GenerateRandomMatrix(Matrix m)

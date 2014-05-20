@@ -88,7 +88,7 @@ __global__ void ConvolutionKernel(Matrix M, Matrix N, Matrix P)
 
     for (m = 0 ; m < 5 ; m++)
         for (n=0 ; n < 5 ; n++) {
-                if((row+m-2 >= 0) && (row+m-2 < N.height) && (col+n-2 >= 0) && (col+n-2 < N.height))
+                if((row+m-2 >= 0) && (row+m-2 < N.height) && (col+n-2 >= 0) && (col+n-2 < N.width))
                     sum += M.elements[m*M.width+n] * N.elements[(row+m-2) * N.width+(col+n-2)];
         }
     P.elements[row*P.width+col] = sum;
@@ -103,7 +103,7 @@ __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
 {
 
     //TODO: calculul rezultatului convoluției
-
+    return;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +116,7 @@ int CompareMatrices(Matrix A, Matrix B)
         return 0;
     int size = A.width * A.height;
     for(i = 0; i < size; i++){
-        printf("A=%d B=%d\n", A.elements[i] , B.elements[i]);
+        //printf("%f %f\n", A.elements[i] , B.elements[i]);
         if(fabs(A.elements[i] - B.elements[i]) > MAX_ERR)
             return 0;
     }
@@ -180,7 +180,6 @@ int main(int argc, char** argv)
     fprintf(out, "Test global %s %s\n", argv[1], (1 == res) ? "PASSED" : "FAILED");
 
     // verifică dacă rezultatul obținut pe device cu memorie partajată este cel așteptat
-  //  int ress = CompareMatrices(reference, PS);
     int ress = CompareMatrices(reference, PS);
     printf("Test shared %s\n", (1 == ress) ? "PASSED" : "FAILED");
     fprintf(out, "Test shared %s %s\n", argv[1], (1 == ress) ? "PASSED" : "FAILED");
@@ -222,7 +221,7 @@ void ConvolutionOnDevice(const Matrix M, const Matrix N, Matrix P)
 
     //TODO: setați configurația de rulare a kernelului
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(N.width / dimBlock.x, N.height / dimBlock.y);
+    dim3 dimGrid(N.width / dimBlock.x + 1, N.height / dimBlock.y + 1);
 
     sdkStartTimer(&kernelTime);
     //TODO: lansați în execuție kernelul
@@ -264,7 +263,7 @@ void ConvolutionOnDeviceShared(const Matrix M, const Matrix N, Matrix P)
 
     //TODO: setați configurația de rulare a kernelului
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(N.width / dimBlock.x, N.height / dimBlock.y);
+    dim3 dimGrid(N.width / dimBlock.x + 1, N.height / dimBlock.y + 1);
 
     sdkStartTimer(&kernelTime);
     //TODO: lansați în execuție kernelul

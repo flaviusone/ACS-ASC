@@ -88,9 +88,14 @@ __global__ void ConvolutionKernel(Matrix M, Matrix N, Matrix P)
 
     for (m = 0 ; m < 5 ; m++)
         for (n=0 ; n < 5 ; n++) {
-            if (((row + m - 2) >= 0) && ((row + m - 2) < N.height) &&
-                ((col + n - 2) >= 0) && ((col + n - 2) < N.width))
-                sum += M.elements[m*M.width+n] * N.elements[(row+m-2) * N.width+(col+n-2)];
+            // if (((row + m - 2) >= 0) && ((row + m - 2) < N.height) &&
+            //     ((col + n - 2) >= 0) && ((col + n - 2) < N.width))
+            //     sum += M.elements[m*M.width+n] * N.elements[(row+m-2) * N.width+(col+n-2)];
+            if((row >= 0) && (row < N.height) && (col >= 0) && (col < N.width)){
+                if((m > 0) || (m < N.width) || (n > 0) || (n < N.height))
+                    sum += M.elements[m*M.width+n] * N.elements[(row+m-2) * N.width+(col+n-2)];
+
+            }
         }
     P.elements[row*P.width+col] = sum;
 

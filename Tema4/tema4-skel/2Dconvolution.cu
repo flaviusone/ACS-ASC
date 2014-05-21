@@ -103,6 +103,10 @@ __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
 {
 
     //TODO: calculul rezultatului convoluției
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    P.elements[row*P.width+col] = 0;
     return;
 }
 
@@ -116,7 +120,7 @@ int CompareMatrices(Matrix A, Matrix B)
         return 0;
     int size = A.width * A.height;
     for(i = 0; i < size; i++){
-        //printf("%f %f\n", A.elements[i] , B.elements[i]);
+        printf("%f %f\n", A.elements[i] , B.elements[i]);
         if(fabs(A.elements[i] - B.elements[i]) > MAX_ERR)
             return 0;
     }
@@ -165,7 +169,7 @@ int main(int argc, char** argv)
 
 
     // M * N pe device
-    ConvolutionOnDevice(M, N, P);
+    //ConvolutionOnDevice(M, N, P);
 
     // M * N pe device cu memorie partajată
     ConvolutionOnDeviceShared(M, N, PS);
@@ -221,7 +225,7 @@ void ConvolutionOnDevice(const Matrix M, const Matrix N, Matrix P)
 
     //TODO: setați configurația de rulare a kernelului
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(N.width / dimBlock.x + 1, N.height / dimBlock.y + 1);
+    dim3 dimGrid((N.width-1) / dimBlock.x + 1, (N.height-1) / dimBlock.y + 1);
 
     sdkStartTimer(&kernelTime);
     //TODO: lansați în execuție kernelul
@@ -263,7 +267,7 @@ void ConvolutionOnDeviceShared(const Matrix M, const Matrix N, Matrix P)
 
     //TODO: setați configurația de rulare a kernelului
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(N.width / dimBlock.x + 1, N.height / dimBlock.y + 1);
+    dim3 dimGrid((N.width-1) / dimBlock.x + 1, (N.height-1) / dimBlock.y + 1);
 
     sdkStartTimer(&kernelTime);
     //TODO: lansați în execuție kernelul

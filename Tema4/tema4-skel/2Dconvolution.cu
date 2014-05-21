@@ -120,7 +120,7 @@ int CompareMatrices(Matrix A, Matrix B)
         return 0;
     int size = A.width * A.height;
     for(i = 0; i < size; i++){
-        printf("%f %f\n", A.elements[i] , B.elements[i]);
+        //printf("%f %f\n", A.elements[i] , B.elements[i]);
         if(fabs(A.elements[i] - B.elements[i]) > MAX_ERR)
             return 0;
     }
@@ -169,7 +169,7 @@ int main(int argc, char** argv)
 
 
     // M * N pe device
-    //ConvolutionOnDevice(M, N, P);
+    ConvolutionOnDevice(M, N, P);
 
     // M * N pe device cu memorie partajată
     ConvolutionOnDeviceShared(M, N, PS);
@@ -271,7 +271,7 @@ void ConvolutionOnDeviceShared(const Matrix M, const Matrix N, Matrix P)
 
     sdkStartTimer(&kernelTime);
     //TODO: lansați în execuție kernelul
-    ConvolutionKernel<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
+    ConvolutionKernelShared<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
     cudaThreadSynchronize();
     sdkStopTimer(&kernelTime);
     printf ("Timp execuție kernel cu memorie partajată: %f ms\n", sdkGetTimerValue(&kernelTime));

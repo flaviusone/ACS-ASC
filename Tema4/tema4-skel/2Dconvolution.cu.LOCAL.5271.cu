@@ -101,7 +101,6 @@ __global__ void ConvolutionKernel(Matrix M, Matrix N, Matrix P)
 __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
 {
 
-
     __shared__ float Ms[5][5];
     __shared__ float Ns[BLOCK_SIZE+4][BLOCK_SIZE+4];
     int m,n;

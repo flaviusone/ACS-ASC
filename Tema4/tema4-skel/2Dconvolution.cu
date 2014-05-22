@@ -102,7 +102,7 @@ __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
 {
 
 
-    __shared__ float Ms[5][5];
+    //__shared__ float Ms[5][5];
     __shared__ float Ns[BLOCK_SIZE+4][BLOCK_SIZE+4];
     int m,n;
     float sum=0;
@@ -119,9 +119,9 @@ __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
     if ((row >= N.height) || (col >= N.width) || (row < 0) || (col < 0)) return;
 
     // Pas 1 copiere matrice Kernel local
-    if(threadIdx.x < 5 && threadIdx.y < 5){
-        Ms[threadCol][threadRow] = M.elements[threadRow*5+threadCol];
-    }
+    // if(threadIdx.x < 5 && threadIdx.y < 5){
+    //     Ms[threadCol][threadRow] = M.elements[threadRow*5+threadCol];
+    // }
 
     // Pas 2 copiere centru matrice local
     // Fiecare thread copiaza block-ul interior in matricea shared
@@ -129,65 +129,64 @@ __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
 
     // Pas 3 copiere bordarea de sus a matricei
     if(threadRow == 0)
-        Ns[threadRow][threadCol+2] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol];
+        Ns[threadRow][threadCol+2] = (row == 0) ? N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol ] : 0;
     if(threadRow == 1)
-        Ns[threadRow+1][threadCol+2] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol];
+        Ns[threadRow+1][threadCol+2] = (row == 1) ? N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol] : 0;
 
     // Pas 4 copiere bordarea de jos a matricei
     if(threadRow == 14)
-        Ns[threadRow+2][threadCol+2] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol];
+        Ns[threadRow+2][threadCol+2] = (row == N.height-1) ? N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol] : 0;
     if(threadRow == 15)
-        Ns[threadRow+1][threadCol+2] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol];
+        Ns[threadRow+1][threadCol+2] = (row == N.height) ? N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol] : 0;
 
     // Pas 5 copiere bordarea din stanga matricei
     if(threadCol == 0)
-        Ns[threadRow+2][threadCol] = N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + threadCol-2];
+        Ns[threadRow+2][threadCol] = (col == 0) ? N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol-2] : 0;
     if(threadCol == 1)
-        Ns[threadRow+2][threadCol+1] = N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + threadCol-1];
+        Ns[threadRow+2][threadCol+1] = (col == 1) ? N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol-1] : 0;
 
 
     // Pas 6 copiere bordarea din dreapta matricei
     if(threadCol == 14)
-        Ns[threadRow+2][threadCol+2] = N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + threadCol+2];
+        Ns[threadRow+2][threadCol+2] = (col == N.width-1) ? N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol+2] : 0;
     if(threadCol == 15)
-        Ns[threadRow+2][threadCol+1] = N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + threadCol+2];
+        Ns[threadRow+2][threadCol+1] = (col == N.width) ? N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol+2] : 0;
 
 
     // Pas 7 copiere cele 16 colturi
     if (threadRow == 0 && threadCol == 0){
-        Ns[0][0] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol - 2];
-        Ns[0][1] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol - 1];
-        Ns[1][0] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol - 2];
-        Ns[1][1] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol - 1];
+        Ns[0][0] = (row == 0) ? N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2] : 0;
+        Ns[0][1] = (row == 0) ? N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1] : 0;
+        Ns[1][0] = (row == 0) ? N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2] : 0;
+        Ns[1][1] = (row == 0) ? N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1] : 0;
     }
 
     if (threadRow == 0 && threadCol == 14){
-        Ns[0][18] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol + 1];
-        Ns[0][19] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol + 2];
-        Ns[1][18] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol + 1];
-        Ns[1][19] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol + 2];
+        Ns[0][18] = (row == 0) ? N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1] : 0;
+        Ns[0][19] = (row == 0) ? N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2] : 0;
+        Ns[1][18] = (row == 0) ? N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1] : 0;
+        Ns[1][19] = (row == 0) ? N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2] : 0;
     }
 
     if (threadRow == 14 && threadCol == 0){
-        Ns[18][0] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol - 2];
-        Ns[18][1] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol - 1];
-        Ns[19][0] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol - 2];
-        Ns[19][1] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol - 1];
+        Ns[18][0] = (row == N.height) ? N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2] : 0;
+        Ns[18][1] = (row == N.height) ? N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1] : 0;
+        Ns[19][0] = (row == N.height) ? N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2] : 0;
+        Ns[19][1] = (row == N.height) ? N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1] : 0;
     }
 
     if (threadRow == 14 && threadCol == 14){
-        Ns[18][18] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol + 1];
-        Ns[18][19] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol + 2];
-        Ns[19][18] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol + 1];
-        Ns[19][19] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol + 2];
+        Ns[18][18] = (row == N.height) ? N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1] : 0;
+        Ns[18][19] = (row == N.height) ? N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2] : 0;
+        Ns[19][18] = (row == N.height) ? N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1] : 0;
+        Ns[19][19] = (row == N.height) ? N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2] : 0;
     }
 
     // Synchronize to make sure that the preceding computation is done before
-    __syncthreads();
+    //__syncthreads();
 
     for (m = 0 ; m < 5 ; m++)
         for (n=0 ; n < 5 ; n++){
-            //sum += M.elements[m*M.width+n] * N.elements[(row+m-2) * N.width+(col+n-2)];
             sum += M.elements[m*M.width+n] * Ns[threadRow+m-2][threadCol+n-2];
         }
 
@@ -207,9 +206,10 @@ int CompareMatrices(Matrix A, Matrix B)
         return 0;
     int size = A.width * A.height;
     for(i = 0; i < size; i++){
-        //printf("%f %f\n", A.elements[i] , B.elements[i]);
-        if(fabs(A.elements[i] - B.elements[i]) > MAX_ERR)
+        if(fabs(A.elements[i] - B.elements[i]) > MAX_ERR){
+            printf("%f %f\n", A.elements[i] , B.elements[i]);
             return 0;
+        }
     }
     return 1;
 }

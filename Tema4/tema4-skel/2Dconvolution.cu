@@ -78,7 +78,6 @@ void ConvolutionOnDeviceShared(const Matrix M, const Matrix N, Matrix P);
 __global__ void ConvolutionKernel(Matrix M, Matrix N, Matrix P)
 {
 
-    //TODO: calculul rezultatului convoluției
     int row = blockIdx.y * blockDim.y + threadIdx.y;
     int col = blockIdx.x * blockDim.x + threadIdx.x;
     float sum=0;
@@ -102,7 +101,98 @@ __global__ void ConvolutionKernel(Matrix M, Matrix N, Matrix P)
 __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
 {
 
-    //TODO: calculul rezultatului convoluției
+    __shared__ float Ms[5][5];
+    __shared__ float Ns[BLOCK_SIZE+4][BLOCK_SIZE+4];
+    int m,n;
+    float sum=0;
+
+    int row = blockIdx.y * blockDim.y + threadIdx.y;
+    int col = blockIdx.x * blockDim.x + threadIdx.x;
+
+    // Block row and column
+    int blockRow = blockIdx.y;
+    int blockCol = blockIdx.x;
+    int threadRow = threadIdx.y;
+    int threadCol = threadIdx.x;
+
+    if ((row >= N.height) || (col >= N.width) || (row < 0) || (col < 0)) return;
+
+    // Pas 1 copiere matrice Kernel local
+    if(threadIdx.x < 5 && threadIdx.y < 5){
+        Ms[threadCol][threadRow] = M.elements[threadRow*5+threadCol];
+    }
+
+    // Pas 2 copiere centru matrice local
+    // Fiecare thread copiaza block-ul interior in matricea shared
+    Ns[threadRow+2][threadCol+2] = N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + threadCol];
+
+    // Pas 3 copiere bordarea de sus a matricei
+    if(threadRow == 0)
+        Ns[threadRow][threadCol+2] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol];
+    if(threadRow == 1)
+        Ns[threadRow+1][threadCol+2] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol];
+
+    // Pas 4 copiere bordarea de jos a matricei
+    if(threadRow == 14)
+        Ns[threadRow+2][threadCol+2] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol];
+    if(threadRow == 15)
+        Ns[threadRow+1][threadCol+2] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol];
+
+    // Pas 5 copiere bordarea din stanga matricei
+    if(threadCol == 0)
+        Ns[threadRow+2][threadCol] = N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + threadCol-2];
+    if(threadCol == 1)
+        Ns[threadRow+2][threadCol+1] = N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + threadCol-1];
+
+
+    // Pas 6 copiere bordarea din dreapta matricei
+    if(threadCol == 14)
+        Ns[threadRow+2][threadCol+2] = N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + threadCol+2];
+    if(threadCol == 15)
+        Ns[threadRow+2][threadCol+1] = N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + threadCol+2];
+
+
+    // Pas 7 copiere cele 16 colturi
+    if (threadRow == 0 && threadCol == 0){
+        Ns[0][0] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol - 2];
+        Ns[0][1] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol - 1];
+        Ns[1][0] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol - 2];
+        Ns[1][1] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol - 1];
+    }
+
+    if (threadRow == 0 && threadCol == 14){
+        Ns[0][18] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol + 1];
+        Ns[0][19] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + threadCol + 2];
+        Ns[1][18] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol + 1];
+        Ns[1][19] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + threadCol + 2];
+    }
+
+    if (threadRow == 14 && threadCol == 0){
+        Ns[18][0] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol - 2];
+        Ns[18][1] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol - 1];
+        Ns[19][0] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol - 2];
+        Ns[19][1] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol - 1];
+    }
+
+    if (threadRow == 14 && threadCol == 14){
+        Ns[18][18] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol + 1];
+        Ns[18][19] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + threadCol + 2];
+        Ns[19][18] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol + 1];
+        Ns[19][19] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + threadCol + 2];
+    }
+
+    // Synchronize to make sure that the preceding computation is done before
+    __syncthreads();
+
+    for (m = 0 ; m < 5 ; m++)
+        for (n=0 ; n < 5 ; n++){
+            //sum += M.elements[m*M.width+n] * N.elements[(row+m-2) * N.width+(col+n-2)];
+            sum += M.elements[m*M.width+n] * Ns[threadRow+m-2][threadCol+n-2];
+        }
+
+
+    P.elements[row*P.width+col] = sum;
+
     return;
 }
 
@@ -221,7 +311,7 @@ void ConvolutionOnDevice(const Matrix M, const Matrix N, Matrix P)
 
     //TODO: setați configurația de rulare a kernelului
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(N.width / dimBlock.x + 1, N.height / dimBlock.y + 1);
+    dim3 dimGrid((N.width-1) / dimBlock.x + 1, (N.height-1) / dimBlock.y + 1);
 
     sdkStartTimer(&kernelTime);
     //TODO: lansați în execuție kernelul
@@ -263,11 +353,11 @@ void ConvolutionOnDeviceShared(const Matrix M, const Matrix N, Matrix P)
 
     //TODO: setați configurația de rulare a kernelului
     dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-    dim3 dimGrid(N.width / dimBlock.x + 1, N.height / dimBlock.y + 1);
+    dim3 dimGrid((N.width-1) / dimBlock.x + 1, (N.height-1) / dimBlock.y + 1);
 
     sdkStartTimer(&kernelTime);
     //TODO: lansați în execuție kernelul
-    ConvolutionKernel<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
+    ConvolutionKernelShared<<<dimGrid, dimBlock>>>(Md, Nd, Pd);
     cudaThreadSynchronize();
     sdkStopTimer(&kernelTime);
     printf ("Timp execuție kernel cu memorie partajată: %f ms\n", sdkGetTimerValue(&kernelTime));

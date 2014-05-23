@@ -1,0 +1,18 @@
+Tema 4 ASC - 2D Convolution
+Author: Flavius Tirnacop 331CA
+
+1. Detalii de implementare
+
+In prima parte, pentru implementarea operatiei de convolutie folosind memoria globala s-a folosit abordarea clasica si anume incarcarea matricelor in device (memoria globala) si lucrul direct cu elementele din aceasta memorie. Astfel codul verifica doar daca atunci cand se fac inmultirile elementelor, sa nu se inmulteasca din M cu elemente ce ar veni in afara matricei N. Acestea din urma se ignora pentru ca sunt considerate 0 si se elimina.
+
+In a doua parte am abortat metoda rezolvarii cu memorie partajata (shared). Astfel pentru fiecare block de threaduri se creeaza doua matrice aditionale de tip shared in care se copiaza elementele din memoria globala. Daca in cazul matricei M nu sunt probleme la aceasta copiere in cazul matricei N se urmeaza urmatorul algoritm:
+	- se aloca o matrice mai mare cu 4 randuri si 4 coloane decat BLOCK_SIZE (cate doua pe fiecare parte pentru depasiri la inmultire)
+	- se copiaza elementele din centrul matricei. fiecare thread copiaza elementul corespunazator al sau din matricea N
+	- se copiaza bordarea de sus a matricei. Threadurile de pe primele doua randuri vor copia de mai sus (din matricea N), iar in caz ca se depaseste atunci vor pune 0 in matricea shared.
+	- se copiaza bordarea de jos a matricei. Threadurile de pe ultimele doua randuri vor copia de mai jos (din matricea N), iar in caz ca se depaseste atunci vor pune 0 in matricea shared.
+	- se copiaza bordarea din dreapta a matricei. Threadurile de pe ultimele doua coloane vor copia din dreapta (din matricea N), iar in caz ca se depaseste atunci vor pune 0 in matricea shared.
+	- se copiaza bordarea din stanga a matricei. Threadurile de pe ultimele doua coloane vor copia din stanga (din matricea N), iar in caz ca se depaseste atunci vor pune 0 in matricea shared.
+	- threadurile din colturile bloc-ului vor copia in matricea N si cele 4 elmente ramase in colt
+	- apoi se vor efectua inmultirile normal intre matricea Ns si matricea Ms. Fiecare thread va calcula elementul corespunzator matricei rezultat
+
+2. Analizare grafice

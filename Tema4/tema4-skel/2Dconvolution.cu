@@ -102,10 +102,8 @@ __global__ void ConvolutionKernel(Matrix M, Matrix N, Matrix P)
 __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
 {
 
-
-    //__shared__ float Ms[5][5];
     __shared__ float Ns[BLOCK_SIZE+4][BLOCK_SIZE+4];
-    int m,n;
+    int n;
     float sum=0;
 
     int row = blockIdx.y * blockDim.y + threadIdx.y;
@@ -118,11 +116,6 @@ __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
     int threadCol = threadIdx.x;
 
     if ((row >= N.height) || (col >= N.width) || (row < 0) || (col < 0)) return;
-
-    // Pas 1 copiere matrice Kernel local
-    // if(threadIdx.x < 5 && threadIdx.y < 5){
-    //     Ms[threadCol][threadRow] = M.elements[threadRow*5+threadCol];
-    // }
 
     // Pas 2 copiere centru matrice local
     // Fiecare thread copiaza block-ul interior in matricea shared
@@ -207,28 +200,13 @@ __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
    __syncthreads();
 
     for (m = 0 ; m < 5 ; m++){
-        //for (n=0 ; n < 5 ; n++){
             sum += M.elements[m*M.width+0] * Ns[threadRow+m][threadCol+0];
             sum += M.elements[m*M.width+1] * Ns[threadRow+m][threadCol+1];
             sum += M.elements[m*M.width+2] * Ns[threadRow+m][threadCol+2];
             sum += M.elements[m*M.width+3] * Ns[threadRow+m][threadCol+3];
             sum += M.elements[m*M.width+4] * Ns[threadRow+m][threadCol+4];
-
-        //}
     }
 
-    // if (blockIdx.x == 0 && blockIdx.y == 0 && threadRow==0 && threadCol==0){
-    // if (blockIdx.x == ((N.width-1) / BLOCK_SIZE ) && blockIdx.y == ((N.height-1) / BLOCK_SIZE ) && threadRow==0 && threadCol==0){
-    // // if (col == N.width-2 && row==0){
-    //     for (m = 0 ; m < BLOCK_SIZE+4 ; m++){
-    //         for (n=0 ; n < BLOCK_SIZE+4 ; n++){
-    //             printf("%4.2f ", Ns[m][n]);
-    //         }
-    //         printf("\n");
-    //     }
-    // }
-
-    //printf("Sum = %f \n", sum);
     P.elements[row*P.width+col] = sum;
 
     return;
@@ -267,6 +245,9 @@ void GenerateRandomMatrix(Matrix m)
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {
+    timeval t1, t2;
+    double elapsedTime;
+
     int width = 0, height = 0;
     FILE *f, *out;
     if(argc < 2)
@@ -301,7 +282,13 @@ int main(int argc, char** argv)
 
     // calculează rezultatul pe CPU pentru comparație
     Matrix reference = AllocateMatrix(P.width, P.height);
+    gettimeofday(&t1, NULL);
     computeGold(reference.elements, M.elements, N.elements, N.height, N.width);
+    gettimeofday(&t2, NULL);
+    elapsedTime = (t2.tv_sec - t1.tv_sec) * 1000.0;      // sec to ms
+    elapsedTime += (t2.tv_usec - t1.tv_usec) / 1000.0;   // us to ms
+
+    printf("Timp ComputeGold  %lf ms\n",elapsedTime);
 
     // verifică dacă rezultatul obținut pe device este cel așteptat
     int res = CompareMatrices(reference, P);

@@ -131,56 +131,74 @@ __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
     // Pas 3 copiere bordarea de sus a matricei
     if(threadRow == 0)
         Ns[threadRow][threadCol+2] = (row == 0) ? 0 : N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol];
-    if(threadRow == 1)
+    else if(threadRow == 1)
         Ns[threadRow][threadCol+2] = (row == 1) ? 0 : N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol];
 
     // Pas 4 copiere bordarea de jos a matricei
-    if(threadRow == 14)
+    else if(threadRow == 14)
         Ns[threadRow+4][threadCol+2] = (row >= N.height-2) ? 0 : N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol];
-    if(threadRow == 15)
+    else if(threadRow == 15)
         Ns[threadRow+4][threadCol+2] = (row >= N.height-1) ? 0 : N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol];
 
     // Pas 5 copiere bordarea din stanga matricei
     if(threadCol == 0)
         Ns[threadRow+2][threadCol] = (col == 0) ? 0 : N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol-2];
-    if(threadCol == 1)
+    else if(threadCol == 1)
         Ns[threadRow+2][threadCol] = (col == 1) ? 0 : N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol-1];
 
 
     // Pas 6 copiere bordarea din dreapta matricei
-    if(threadCol == 14)
+    else if(threadCol == 14)
         Ns[threadRow+2][threadCol+4] = (col >= N.width-2) ? 0 : N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol+2];
-    if(threadCol == 15)
+    else if(threadCol == 15)
         Ns[threadRow+2][threadCol+4] = (col >= N.width-1) ? 0 : N.elements[N.width * BLOCK_SIZE * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol+2];
 
 
     // Pas 7 copiere cele 16 colturi
     if (threadRow == 0 && threadCol == 0){
-        Ns[0][0] = (row == 0 || col == 0) ? 0 : N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2];
-        Ns[0][1] = (row == 0 || col == 0) ? 0 : N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1];
-        Ns[1][0] = (row == 0 || col == 0) ? 0 : N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2];
-        Ns[1][1] = (row == 0 || col == 0) ? 0 : N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1];
+        if (row == 0 || col == 0){
+            Ns[0][0] = 0;   Ns[0][1] = 0;   Ns[1][0] = 0;   Ns[1][1] = 0;
+
+        }else{
+            Ns[0][0] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2];
+            Ns[0][1] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1];
+            Ns[1][0] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2];
+            Ns[1][1] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1];
+
+        }
     }
 
     if (threadRow == 0 && threadCol == 15){
-        Ns[0][18] = (row == 0 || col >= N.width-1) ? 0 : N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1];
-        Ns[0][19] = (row == 0 || col >= N.width-1) ? 0 : N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2];
-        Ns[1][18] = (row == 0 || col >= N.width-1) ? 0 : N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1];
-        Ns[1][19] = (row == 0 || col >= N.width-1) ? 0 : N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2];
+        if (row == 0 || col >= N.width-1){
+            Ns[0][18] = 0;  Ns[0][19] = 0;  Ns[1][18] = 0;  Ns[1][19] = 0;
+        }else{
+            Ns[0][18] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1];
+            Ns[0][19] = N.elements[N.width * (BLOCK_SIZE-2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2];
+            Ns[1][18] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1];
+            Ns[1][19] = N.elements[N.width * (BLOCK_SIZE-1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2];
+        }
     }
 
     if (threadRow == 15 && threadCol == 0){
-        Ns[18][0] = (row >= N.height-1 || col == 0) ? 0 : N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2];
-        Ns[18][1] = (row >= N.height-1 || col == 0) ? 0 : N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1];
-        Ns[19][0] = (row >= N.height-1 || col == 0) ? 0 : N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2];
-        Ns[19][1] = (row >= N.height-1 || col == 0) ? 0 : N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1];
+        if (row >= N.height-1 || col == 0){
+            Ns[18][0] = 0;  Ns[18][1] = 0;    Ns[19][0] = 0;  Ns[19][1] = 0;
+        }else{
+            Ns[18][0] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2];
+            Ns[18][1] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1];
+            Ns[19][0] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 2];
+            Ns[19][1] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol - 1];
+        }
     }
 
     if (threadRow == 15 && threadCol == 15){
-        Ns[18][18] = (row >= N.height-1 || col >= N.width-1) ? 0 : N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1];
-        Ns[18][19] = (row >= N.height-1 || col >= N.width-1) ? 0 : N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2];
-        Ns[19][18] = (row >= N.height-1 || col >= N.width-1) ? 0 : N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1];
-        Ns[19][19] = (row >= N.height-1 || col >= N.width-1) ? 0 : N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2];
+        if (row >= N.height-1 || col >= N.width-1){
+            Ns[18][18] = 0; Ns[18][19] = 0;  Ns[19][18] = 0;   Ns[19][19] = 0;
+        }else{
+            Ns[18][18] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1];
+            Ns[18][19] = N.elements[N.width * (BLOCK_SIZE+1) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2];
+            Ns[19][18] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 1];
+            Ns[19][19] = N.elements[N.width * (BLOCK_SIZE+2) * blockRow + N.width * threadRow + BLOCK_SIZE * blockCol + threadCol + 2];
+        }
     }
 
     // Synchronize to make sure that the preceding computation is done before
@@ -193,15 +211,15 @@ __global__ void ConvolutionKernelShared(Matrix M, Matrix N, Matrix P)
         }
 
     // if (blockIdx.x == 0 && blockIdx.y == 0 && threadRow==0 && threadCol==0){
-    if (blockIdx.x == 0 && blockIdx.y == (N.height / BLOCK_SIZE) && threadRow==0 && threadCol==0){
-    // if (col == N.width-2 && row==0){
-        for (m = 0 ; m < BLOCK_SIZE+4 ; m++){
-            for (n=0 ; n < BLOCK_SIZE+4 ; n++){
-                printf("%4.2f ", Ns[m][n]);
-            }
-            printf("\n");
-        }
-    }
+    // if (blockIdx.x == ((N.width-1) / BLOCK_SIZE ) && blockIdx.y == ((N.height-1) / BLOCK_SIZE ) && threadRow==0 && threadCol==0){
+    // // if (col == N.width-2 && row==0){
+    //     for (m = 0 ; m < BLOCK_SIZE+4 ; m++){
+    //         for (n=0 ; n < BLOCK_SIZE+4 ; n++){
+    //             printf("%4.2f ", Ns[m][n]);
+    //         }
+    //         printf("\n");
+    //     }
+    // }
 
     //printf("Sum = %f \n", sum);
     P.elements[row*P.width+col] = sum;
